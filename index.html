@@ -935,6 +935,14 @@
       controls.dampingFactor = 0.1;
       controls.rotateSpeed = 0.6;
 
+      const forceAutoRotate = () => {
+        controls.autoRotate = true;
+      };
+      globeEl.addEventListener("mouseup", forceAutoRotate);
+      globeEl.addEventListener("mouseleave", forceAutoRotate);
+      globeEl.addEventListener("touchend", forceAutoRotate);
+      setInterval(forceAutoRotate, 1500);
+
       countryInfoEl.addEventListener("click", (event) => {
         if (!(event.target instanceof HTMLElement)) return;
         if (event.target.id !== "unpinCountryBtn") return;
