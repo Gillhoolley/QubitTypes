@@ -795,6 +795,7 @@
             if (!feature || !profile) return null;
             const center = getFeatureCenter(feature);
             return {
+              code,
               lat: center.lat,
               lng: center.lng,
               name: profile.country
@@ -839,11 +840,6 @@
         .labelAltitude(0.025)
         .polygonsData(countries)
         .onPolygonHover((feature, prevFeature, evt) => {
-          if (pinnedCountryCode) {
-            hideTooltip();
-            return;
-          }
-
           if (!feature) {
             hideTooltip();
             return;
@@ -872,28 +868,41 @@
               return;
             }
 
-            if (pinnedCountryCode === code) {
-              pinnedCountryCode = null;
-              updateCountryPanel(countryProfiles.USA || null, selectedFilter);
-              updateCountryTechSnapshotCard(selectedFilter, countryProfiles.USA || null);
-              countrySelectEl.value = "USA";
-            } else {
-              pinnedCountryCode = code;
-              updateCountryPanel(countryProfiles[code], selectedFilter, true);
-              updateCountryTechSnapshotCard(selectedFilter, countryProfiles[code]);
-              countrySelectEl.value = code;
-              const center = getFeatureCenter(feature);
-              globe.pointOfView({ lat: center.lat, lng: center.lng, altitude: 1.5 }, 900);
-              setTimeout(() => {
-                scheduleAutoRotate();
-              }, 950);
-            }
+            pinnedCountryCode = code;
+            updateCountryPanel(countryProfiles[code], selectedFilter, true);
+            updateCountryTechSnapshotCard(selectedFilter, countryProfiles[code]);
+            countrySelectEl.value = code;
+            const center = getFeatureCenter(feature);
+            globe.pointOfView({ lat: center.lat, lng: center.lng, altitude: 1.5 }, 900);
+            setTimeout(() => {
+              scheduleAutoRotate();
+            }, 950);
             hideTooltip();
           } catch (error) {
             pinnedCountryCode = null;
             updateCountryPanel(countryProfiles.USA || null, selectedFilter);
             updateCountryTechSnapshotCard(selectedFilter, countryProfiles.USA || null);
             hideTooltip();
+            scheduleAutoRotate();
+          }
+        })
+        .onLabelClick((label) => {
+          try {
+            const code = label?.code;
+            if (!code || !activeCodes().has(code)) return;
+            const feature = featuresByCode.get(code);
+            const profile = countryProfiles[code];
+            if (!feature || !profile) return;
+            pinnedCountryCode = code;
+            countrySelectEl.value = code;
+            updateCountryPanel(profile, selectedFilter, true);
+            updateCountryTechSnapshotCard(selectedFilter, profile);
+            const center = getFeatureCenter(feature);
+            globe.pointOfView({ lat: center.lat, lng: center.lng, altitude: 1.5 }, 900);
+            setTimeout(() => {
+              scheduleAutoRotate();
+            }, 950);
+          } catch (error) {
             scheduleAutoRotate();
           }
         });
