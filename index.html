@@ -283,6 +283,13 @@
         </section>
 
         <section class="stat-block">
+          <h2>Technology Focus Card</h2>
+          <div id="techFocusContent">
+            <p class="hint">Select a qubit type to view countries, major organizations, and global investment.</p>
+          </div>
+        </section>
+
+        <section class="stat-block">
           <h2>Technology Colors</h2>
           <ul class="legend" id="legend"></ul>
         </section>
@@ -381,6 +388,17 @@
         { iso3: "ESP", country: "Spain", orgs: ["ICFO", "CSIC"], initiatives: ["Quantum Spain"] }
       ]
     };
+    const globalInvestmentByType = {
+      photonic: "$9.4B",
+      topological: "$5.1B",
+      ionTrap: "$7.2B",
+      semiconductor: "$6.3B",
+      superconducting: "$12.8B",
+      neutralAtom: "$5.8B",
+      quantumDot: "$4.6B",
+      diamondNV: "$3.9B",
+      nmr: "$2.1B"
+    };
 
     const countryProfiles = {};
 
@@ -405,6 +423,7 @@
     const countrySelectEl = document.getElementById("countrySelect");
     const legendEl = document.getElementById("legend");
     const summaryEl = document.getElementById("summaryText");
+    const techFocusEl = document.getElementById("techFocusContent");
     const countryInfoEl = document.getElementById("countryInfo");
     const tooltipEl = document.getElementById("tooltip");
 
@@ -468,6 +487,31 @@
 
       const label = qubitConfig.find((q) => q.id === filterId).label;
       summaryEl.textContent = `${label}: ${activeCodes.size} active countries and ${companyCount.size} organizations/institutions tracked in this view.`;
+    }
+
+    function updateTechFocusCard(filterId) {
+      if (filterId === "all") {
+        techFocusEl.innerHTML = `<p class="hint">Select a specific qubit type from the dropdown to generate a focused card.</p>`;
+        return;
+      }
+
+      const rows = qubitData[filterId] || [];
+      const countries = rows.map((r) => r.country).sort((a, b) => a.localeCompare(b));
+      const organizations = Array.from(new Set(rows.flatMap((r) => r.orgs))).sort((a, b) => a.localeCompare(b));
+      const label = qubitConfig.find((q) => q.id === filterId)?.label || filterId;
+      const investment = globalInvestmentByType[filterId] || "N/A";
+
+      const countryList = countries.map((name) => `<li>${name}</li>`).join("");
+      const orgList = organizations.slice(0, 12).map((name) => `<li>${name}</li>`).join("");
+
+      techFocusEl.innerHTML = `
+        <p class="hint" style="margin:0 0 0.45rem;"><strong style="color:#e8f1f7;">${label}</strong></p>
+        <p class="hint" style="margin:0 0 0.45rem;"><strong style="color:#e8f1f7;">Global investment:</strong> ${investment}</p>
+        <p class="hint" style="margin:0.3rem 0 0.15rem;">Countries involved (${countries.length})</p>
+        <ul class="small-list">${countryList || "<li>No entries</li>"}</ul>
+        <p class="hint" style="margin:0.45rem 0 0.15rem;">Major organizations (${organizations.length})</p>
+        <ul class="small-list">${orgList || "<li>No entries</li>"}</ul>
+      `;
     }
 
     function updateCountryPanel(profile, filterId, isPinned = false) {
@@ -710,6 +754,7 @@
       selectEl.addEventListener("change", (event) => {
         selectedFilter = event.target.value;
         setSummary(selectedFilter);
+        updateTechFocusCard(selectedFilter);
         hideTooltip();
         if (pinnedCountryCode && activeCodes().has(pinnedCountryCode)) {
           updateCountryPanel(countryProfiles[pinnedCountryCode], selectedFilter, true);
@@ -744,6 +789,7 @@
       });
 
       setSummary(selectedFilter);
+      updateTechFocusCard(selectedFilter);
       updateCountryPanel(countryProfiles.USA || null, selectedFilter);
 
       window.addEventListener("resize", () => {
