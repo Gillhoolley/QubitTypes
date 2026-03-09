@@ -268,6 +268,8 @@
       <div class="controls">
         <label for="qubitSelect">Qubit Type Filter</label>
         <select id="qubitSelect" aria-label="Filter by qubit technology"></select>
+        <label for="countrySelect">Country</label>
+        <select id="countrySelect" aria-label="Jump to a country"></select>
       </div>
     </nav>
 
@@ -400,6 +402,7 @@
     });
 
     const selectEl = document.getElementById("qubitSelect");
+    const countrySelectEl = document.getElementById("countrySelect");
     const legendEl = document.getElementById("legend");
     const summaryEl = document.getElementById("summaryText");
     const countryInfoEl = document.getElementById("countryInfo");
@@ -419,6 +422,24 @@
         selectEl.append(option);
       });
       selectEl.value = "all";
+    }
+
+    function fillCountryDropdown() {
+      const defaultOption = document.createElement("option");
+      defaultOption.value = "";
+      defaultOption.textContent = "Select a country";
+      countrySelectEl.append(defaultOption);
+
+      Object.values(countryProfiles)
+        .sort((a, b) => a.country.localeCompare(b.country))
+        .forEach((profile) => {
+          const option = document.createElement("option");
+          option.value = profile.iso3;
+          option.textContent = profile.country;
+          countrySelectEl.append(option);
+        });
+
+      countrySelectEl.value = "USA";
     }
 
     function buildLegend() {
@@ -517,12 +538,18 @@
 
     async function init() {
       fillDropdown();
+      fillCountryDropdown();
       buildLegend();
 
       const globeEl = document.getElementById("globeViz");
       const worldResp = await fetch("https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json");
       const worldGeo = await worldResp.json();
       const countries = worldGeo.features;
+      const featuresByCode = new Map();
+      countries.forEach((feature) => {
+        const code = (feature?.properties?.ISO_A3 || feature?.id || "").toString();
+        if (code) featuresByCode.set(code, feature);
+      });
 
       let selectedFilter = "all";
       let pinnedCountryCode = null;
@@ -621,6 +648,7 @@
             if (!code || !activeCodes().has(code)) {
               pinnedCountryCode = null;
               updateCountryPanel(countryProfiles.USA || null, selectedFilter);
+              countrySelectEl.value = "USA";
               hideTooltip();
               return;
             }
@@ -628,9 +656,11 @@
             if (pinnedCountryCode === code) {
               pinnedCountryCode = null;
               updateCountryPanel(countryProfiles.USA || null, selectedFilter);
+              countrySelectEl.value = "USA";
             } else {
               pinnedCountryCode = code;
               updateCountryPanel(countryProfiles[code], selectedFilter, true);
+              countrySelectEl.value = code;
               const center = getFeatureCenter(feature);
               globe.pointOfView({ lat: center.lat, lng: center.lng, altitude: 1.5 }, 900);
               setTimeout(() => {
@@ -673,6 +703,7 @@
         if (event.target.id !== "unpinCountryBtn") return;
         pinnedCountryCode = null;
         hideTooltip();
+        countrySelectEl.value = "USA";
         updateCountryPanel(countryProfiles.USA || null, selectedFilter);
       });
 
@@ -682,14 +713,34 @@
         hideTooltip();
         if (pinnedCountryCode && activeCodes().has(pinnedCountryCode)) {
           updateCountryPanel(countryProfiles[pinnedCountryCode], selectedFilter, true);
+          countrySelectEl.value = pinnedCountryCode;
         } else {
           pinnedCountryCode = null;
+          countrySelectEl.value = "USA";
           updateCountryPanel(countryProfiles.USA || null, selectedFilter);
         }
         globe
           .polygonCapColor(globe.polygonCapColor())
           .polygonAltitude(globe.polygonAltitude())
           .polygonStrokeColor(globe.polygonStrokeColor());
+      });
+
+      countrySelectEl.addEventListener("change", (event) => {
+        const code = event.target.value || "USA";
+        const profile = countryProfiles[code];
+        if (!profile) return;
+        pinnedCountryCode = code;
+        updateCountryPanel(profile, selectedFilter, true);
+        hideTooltip();
+
+        const feature = featuresByCode.get(code);
+        if (feature) {
+          const center = getFeatureCenter(feature);
+          globe.pointOfView({ lat: center.lat, lng: center.lng, altitude: 1.5 }, 900);
+          setTimeout(() => {
+            scheduleAutoRotate();
+          }, 950);
+        }
       });
 
       setSummary(selectedFilter);
