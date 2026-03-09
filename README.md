@@ -29,9 +29,14 @@ Use lowercase kebab-case for all `RawData` directories.
 
 Current directories:
 
+- `RawData/diamond-nv`
+- `RawData/neutral-atom`
+- `RawData/nmr`
 - `RawData/photonics`
+- `RawData/quantum-dot`
 - `RawData/semiconducting-qubits`
 - `RawData/semiconductor-spin`
+- `RawData/superconducting`
 - `RawData/topological`
 - `RawData/trapped-ion`
 
