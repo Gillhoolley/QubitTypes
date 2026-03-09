@@ -829,7 +829,8 @@
         };
       };
       const getLabelData = () => {
-        const codes = Array.from(activeCodes());
+        const codes = new Set(activeCodes());
+        if (pinnedCountryCode) codes.add(pinnedCountryCode);
         return codes
           .map((code) => {
             const feature = featuresByCode.get(code);
@@ -858,7 +859,101 @@
         }];
       };
 
-      const globe = Globe()(globeEl)
+      // Interaction state machine to prevent hover/click/drag/auto-rotate conflicts.
+      const interactionState = {
+        mode: "auto-rotating", // idle | auto-rotating | hovering | dragging | selected
+        pointerDown: false,
+        isDragging: false,
+        downX: 0,
+        downY: 0,
+        suppressClickUntil: 0,
+        hoverClearTimer: null,
+        tooltipRaf: null,
+        latestTooltip: null,
+        resumeTimer: null
+      };
+
+      const DRAG_THRESHOLD_MOUSE = 7;
+      const DRAG_THRESHOLD_TOUCH = 12;
+      const AUTO_ROTATE_RESUME_DELAY_MS = 1400;
+
+      let controls;
+      let globe;
+
+      function pauseAutoRotate(reason) {
+        if (interactionState.resumeTimer) clearTimeout(interactionState.resumeTimer);
+        if (controls) controls.autoRotate = false;
+        interactionState.mode = reason;
+      }
+
+      function scheduleAutoRotateResume(delayMs = AUTO_ROTATE_RESUME_DELAY_MS) {
+        if (interactionState.resumeTimer) clearTimeout(interactionState.resumeTimer);
+        interactionState.resumeTimer = setTimeout(() => {
+          if (interactionState.isDragging) return;
+          if (controls) controls.autoRotate = true;
+          interactionState.mode = pinnedCountryCode ? "selected" : "auto-rotating";
+        }, delayMs);
+      }
+
+      function refreshGlobeVisuals() {
+        globe
+          .polygonCapColor(globe.polygonCapColor())
+          .polygonAltitude(globe.polygonAltitude())
+          .polygonStrokeColor(globe.polygonStrokeColor())
+          .labelsData(getLabelData())
+          .pointsData(getSelectedPointData());
+      }
+
+      function queueTooltipRender(x, y, html) {
+        interactionState.latestTooltip = { x, y, html };
+        if (interactionState.tooltipRaf) return;
+        interactionState.tooltipRaf = requestAnimationFrame(() => {
+          interactionState.tooltipRaf = null;
+          if (!interactionState.latestTooltip) return;
+          const t = interactionState.latestTooltip;
+          showTooltip(t.x, t.y, t.html);
+        });
+      }
+
+      function clearHoverSoon() {
+        if (interactionState.hoverClearTimer) clearTimeout(interactionState.hoverClearTimer);
+        interactionState.hoverClearTimer = setTimeout(() => {
+          hideTooltip();
+          if (!interactionState.isDragging) scheduleAutoRotateResume();
+        }, 110);
+      }
+
+      function clearHoverNow() {
+        if (interactionState.hoverClearTimer) clearTimeout(interactionState.hoverClearTimer);
+        interactionState.hoverClearTimer = null;
+        hideTooltip();
+      }
+
+      function selectCountry(code, featureForCenter = null) {
+        const profile = countryProfiles[code];
+        if (!profile) return;
+
+        pinnedCountryCode = code;
+        interactionState.mode = "selected";
+        countrySelectEl.value = code;
+        updateCountryPanel(profile, selectedFilter, true);
+        updateCountryTechSnapshotCard(selectedFilter, profile);
+        updateCardVisibility(selectedFilter, profile, true);
+        repositionTechnologyColorsCard(selectedFilter);
+        clearHoverNow();
+        refreshGlobeVisuals();
+
+        if (ENABLE_CENTER_ON_SELECT) {
+          const sourceFeature = featureForCenter || featuresByCode.get(code);
+          if (sourceFeature) {
+            const center = getFeatureCenter(sourceFeature);
+            globe.pointOfView({ lat: center.lat, lng: center.lng, altitude: 1.5 }, 900);
+          }
+        }
+        scheduleAutoRotateResume();
+      }
+
+      globe = Globe()(globeEl)
         .globeImageUrl("https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg")
         .bumpImageUrl("https://unpkg.com/three-globe/example/img/earth-topology.png")
         .backgroundImageUrl("https://unpkg.com/three-globe/example/img/night-sky.png")
@@ -867,8 +962,8 @@
         .atmosphereAltitude(0.2)
         .polygonCapColor((feature) => {
           const code = countryCode(feature);
-          if (!activeCodes().has(code)) return "rgba(115,130,143,0.12)";
           if (pinnedCountryCode && code === pinnedCountryCode) return "rgba(255, 235, 130, 0.95)";
+          if (!activeCodes().has(code)) return "rgba(115,130,143,0.12)";
           const useColor = selectedFilter === "all"
             ? cssVarColor(colorMap.all)
             : cssVarColor(colorMap[selectedFilter]);
@@ -903,8 +998,13 @@
         .pointRadius(0.55)
         .polygonsData(countries)
         .onPolygonHover((feature, prevFeature, evt) => {
+          if (interactionState.isDragging) {
+            clearHoverNow();
+            return;
+          }
+
           if (!feature) {
-            hideTooltip();
+            clearHoverSoon();
             return;
           }
 
@@ -912,95 +1012,64 @@
           const profile = countryProfiles[code];
 
           if (!profile || !activeCodes().has(code)) {
-            hideTooltip();
+            clearHoverSoon();
             return;
           }
 
-          showTooltip(evt.clientX, evt.clientY, tooltipHtml(profile, selectedFilter));
+          if (interactionState.hoverClearTimer) clearTimeout(interactionState.hoverClearTimer);
+          pauseAutoRotate("hovering");
+          queueTooltipRender(evt.clientX, evt.clientY, tooltipHtml(profile, selectedFilter));
         })
         .onPolygonClick((feature) => {
           if (!feature) return;
+          if (interactionState.isDragging || Date.now() < interactionState.suppressClickUntil) return;
           try {
             const code = countryCode(feature);
             if (!code || !activeCodes().has(code)) {
               pinnedCountryCode = null;
+              interactionState.mode = "idle";
               updateCountryPanel(countryProfiles.USA || null, selectedFilter);
               updateCountryTechSnapshotCard(selectedFilter, countryProfiles.USA || null);
               updateCardVisibility(selectedFilter, countryProfiles.USA || null, false);
               repositionTechnologyColorsCard(selectedFilter);
               countrySelectEl.value = "USA";
-              globe.pointsData(getSelectedPointData());
-              hideTooltip();
+              clearHoverNow();
+              refreshGlobeVisuals();
+              scheduleAutoRotateResume();
               return;
             }
 
-            pinnedCountryCode = code;
-            updateCountryPanel(countryProfiles[code], selectedFilter, true);
-            updateCountryTechSnapshotCard(selectedFilter, countryProfiles[code]);
-            updateCardVisibility(selectedFilter, countryProfiles[code], true);
-            repositionTechnologyColorsCard(selectedFilter);
-            countrySelectEl.value = code;
-            globe.pointsData(getSelectedPointData());
-            if (ENABLE_CENTER_ON_SELECT) {
-              const center = getFeatureCenter(feature);
-              globe.pointOfView({ lat: center.lat, lng: center.lng, altitude: 1.5 }, 900);
-              setTimeout(() => {
-                scheduleAutoRotate();
-              }, 950);
-            } else {
-              scheduleAutoRotate();
-            }
-            hideTooltip();
+            selectCountry(code, feature);
           } catch (error) {
             pinnedCountryCode = null;
+            interactionState.mode = "idle";
             updateCountryPanel(countryProfiles.USA || null, selectedFilter);
             updateCountryTechSnapshotCard(selectedFilter, countryProfiles.USA || null);
             updateCardVisibility(selectedFilter, countryProfiles.USA || null, false);
             repositionTechnologyColorsCard(selectedFilter);
-            globe.pointsData(getSelectedPointData());
-            hideTooltip();
-            scheduleAutoRotate();
+            clearHoverNow();
+            refreshGlobeVisuals();
+            scheduleAutoRotateResume();
           }
         })
         .onLabelClick((label) => {
+          if (interactionState.isDragging || Date.now() < interactionState.suppressClickUntil) return;
           try {
             const code = label?.code;
             if (!code || !activeCodes().has(code)) return;
             const feature = featuresByCode.get(code);
             const profile = countryProfiles[code];
             if (!feature || !profile) return;
-            pinnedCountryCode = code;
-            countrySelectEl.value = code;
-            updateCountryPanel(profile, selectedFilter, true);
-            updateCountryTechSnapshotCard(selectedFilter, profile);
-            updateCardVisibility(selectedFilter, profile, true);
-            repositionTechnologyColorsCard(selectedFilter);
-            globe.pointsData(getSelectedPointData());
-            if (ENABLE_CENTER_ON_SELECT) {
-              const center = getFeatureCenter(feature);
-              globe.pointOfView({ lat: center.lat, lng: center.lng, altitude: 1.5 }, 900);
-              setTimeout(() => {
-                scheduleAutoRotate();
-              }, 950);
-            } else {
-              scheduleAutoRotate();
-            }
+            selectCountry(code, feature);
           } catch (error) {
-            scheduleAutoRotate();
+            scheduleAutoRotateResume();
           }
         });
 
       globe.width(globeEl.clientWidth);
       globe.height(globeEl.clientHeight);
 
-      const controls = globe.controls();
-      let rotateResumeTimer = null;
-      const scheduleAutoRotate = () => {
-        if (rotateResumeTimer) clearTimeout(rotateResumeTimer);
-        rotateResumeTimer = setTimeout(() => {
-          controls.autoRotate = true;
-        }, 800);
-      };
+      controls = globe.controls();
 
       controls.autoRotate = true;
       controls.autoRotateSpeed = 0.55;
@@ -1009,13 +1078,46 @@
       controls.dampingFactor = 0.1;
       controls.rotateSpeed = 0.6;
 
-      const forceAutoRotate = () => {
-        controls.autoRotate = true;
-      };
-      globeEl.addEventListener("mouseup", forceAutoRotate);
-      globeEl.addEventListener("mouseleave", forceAutoRotate);
-      globeEl.addEventListener("touchend", forceAutoRotate);
-      setInterval(forceAutoRotate, 1500);
+      // Drag threshold logic: prevents accidental click-select while rotating the globe.
+      globeEl.addEventListener("pointerdown", (event) => {
+        interactionState.pointerDown = true;
+        interactionState.isDragging = false;
+        interactionState.downX = event.clientX;
+        interactionState.downY = event.clientY;
+        pauseAutoRotate("idle");
+      });
+
+      globeEl.addEventListener("pointermove", (event) => {
+        if (!interactionState.pointerDown) return;
+        const dx = event.clientX - interactionState.downX;
+        const dy = event.clientY - interactionState.downY;
+        const dist = Math.hypot(dx, dy);
+        const threshold = event.pointerType === "touch" ? DRAG_THRESHOLD_TOUCH : DRAG_THRESHOLD_MOUSE;
+        if (dist >= threshold) {
+          interactionState.isDragging = true;
+          interactionState.mode = "dragging";
+          clearHoverNow();
+        }
+      });
+
+      globeEl.addEventListener("pointerup", () => {
+        if (interactionState.pointerDown && interactionState.isDragging) {
+          interactionState.suppressClickUntil = Date.now() + 180;
+        }
+        interactionState.pointerDown = false;
+        interactionState.isDragging = false;
+        scheduleAutoRotateResume();
+      });
+
+      globeEl.addEventListener("pointercancel", () => {
+        interactionState.pointerDown = false;
+        interactionState.isDragging = false;
+        scheduleAutoRotateResume();
+      });
+
+      globeEl.addEventListener("mouseleave", () => {
+        if (!interactionState.pointerDown) scheduleAutoRotateResume();
+      });
 
       countryInfoEl.addEventListener("click", (event) => {
         if (!(event.target instanceof HTMLElement)) return;
@@ -1036,7 +1138,7 @@
         updateTechFocusCard(selectedFilter);
         repositionTechnologyColorsCard(selectedFilter);
         hideTooltip();
-        if (pinnedCountryCode && activeCodes().has(pinnedCountryCode)) {
+        if (pinnedCountryCode && countryProfiles[pinnedCountryCode]) {
           updateCountryPanel(countryProfiles[pinnedCountryCode], selectedFilter, true);
           updateCountryTechSnapshotCard(selectedFilter, countryProfiles[pinnedCountryCode]);
           updateCardVisibility(selectedFilter, countryProfiles[pinnedCountryCode], true);
@@ -1048,38 +1150,13 @@
           updateCountryTechSnapshotCard(selectedFilter, countryProfiles.USA || null);
           updateCardVisibility(selectedFilter, countryProfiles.USA || null, false);
         }
-        globe
-          .polygonCapColor(globe.polygonCapColor())
-          .polygonAltitude(globe.polygonAltitude())
-          .polygonStrokeColor(globe.polygonStrokeColor())
-          .labelsData(getLabelData())
-          .pointsData(getSelectedPointData());
+        refreshGlobeVisuals();
       });
 
       countrySelectEl.addEventListener("change", (event) => {
         const code = event.target.value || "USA";
-        const profile = countryProfiles[code];
-        if (!profile) return;
-        pinnedCountryCode = code;
-        updateCountryPanel(profile, selectedFilter, true);
-        updateCountryTechSnapshotCard(selectedFilter, profile);
-        updateCardVisibility(selectedFilter, profile, true);
-        repositionTechnologyColorsCard(selectedFilter);
-        globe.pointsData(getSelectedPointData());
-        hideTooltip();
-
-        const feature = featuresByCode.get(code);
-        if (feature) {
-          if (ENABLE_CENTER_ON_SELECT) {
-            const center = getFeatureCenter(feature);
-            globe.pointOfView({ lat: center.lat, lng: center.lng, altitude: 1.5 }, 900);
-            setTimeout(() => {
-              scheduleAutoRotate();
-            }, 950);
-          } else {
-            scheduleAutoRotate();
-          }
-        }
+        const feature = featuresByCode.get(code) || null;
+        selectCountry(code, feature);
       });
 
       setSummary(selectedFilter);
@@ -1088,7 +1165,7 @@
       updateCountryTechSnapshotCard(selectedFilter, countryProfiles.USA || null);
       updateCardVisibility(selectedFilter, countryProfiles.USA || null, false);
       repositionTechnologyColorsCard(selectedFilter);
-      globe.pointsData(getSelectedPointData());
+      refreshGlobeVisuals();
 
       window.addEventListener("resize", () => {
         globe.width(globeEl.clientWidth);
