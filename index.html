@@ -232,6 +232,10 @@
     }
 
     @media (max-width: 980px) {
+      body {
+        overflow: auto;
+      }
+
       .content {
         grid-template-columns: 1fr;
       }
@@ -519,8 +523,15 @@
       let pinnedCountryCode = null;
       const activeCodes = () => getActiveCountryCodes(selectedFilter);
       const countryCode = (feature) => feature?.properties?.ISO_A3 || feature?.id;
+      const normalizeLng = (lng) => {
+        let v = lng;
+        while (v > 180) v -= 360;
+        while (v < -180) v += 360;
+        return v;
+      };
       const getFeatureCenter = (feature) => {
         const bounds = { minLng: 180, maxLng: -180, minLat: 90, maxLat: -90 };
+        const shiftedBounds = { minLng: 360, maxLng: 0 };
         const walk = (coords) => {
           if (!Array.isArray(coords)) return;
           if (typeof coords[0] === "number" && typeof coords[1] === "number") {
@@ -529,14 +540,26 @@
             bounds.maxLng = Math.max(bounds.maxLng, lng);
             bounds.minLat = Math.min(bounds.minLat, lat);
             bounds.maxLat = Math.max(bounds.maxLat, lat);
+            const shifted = lng < 0 ? lng + 360 : lng;
+            shiftedBounds.minLng = Math.min(shiftedBounds.minLng, shifted);
+            shiftedBounds.maxLng = Math.max(shiftedBounds.maxLng, shifted);
             return;
           }
           coords.forEach(walk);
         };
         walk(feature?.geometry?.coordinates);
+        const spanNormal = bounds.maxLng - bounds.minLng;
+        const spanShifted = shiftedBounds.maxLng - shiftedBounds.minLng;
+        const lng = spanShifted < spanNormal
+          ? normalizeLng((shiftedBounds.minLng + shiftedBounds.maxLng) / 2)
+          : (bounds.minLng + bounds.maxLng) / 2;
+        const lat = (bounds.minLat + bounds.maxLat) / 2;
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+          return { lat: 20, lng: 0 };
+        }
         return {
-          lng: (bounds.minLng + bounds.maxLng) / 2,
-          lat: (bounds.minLat + bounds.maxLat) / 2
+          lng,
+          lat
         };
       };
 
@@ -591,24 +614,34 @@
         })
         .onPolygonClick((feature) => {
           if (!feature) return;
-          const code = countryCode(feature);
-          if (!code || !activeCodes().has(code)) {
+          try {
+            const code = countryCode(feature);
+            if (!code || !activeCodes().has(code)) {
+              pinnedCountryCode = null;
+              updateCountryPanel(null, selectedFilter);
+              hideTooltip();
+              return;
+            }
+
+            if (pinnedCountryCode === code) {
+              pinnedCountryCode = null;
+              updateCountryPanel(null, selectedFilter);
+            } else {
+              pinnedCountryCode = code;
+              updateCountryPanel(countryProfiles[code], selectedFilter, true);
+              const center = getFeatureCenter(feature);
+              globe.pointOfView({ lat: center.lat, lng: center.lng, altitude: 1.5 }, 900);
+              setTimeout(() => {
+                globe.controls().autoRotate = true;
+              }, 950);
+            }
+            hideTooltip();
+          } catch (error) {
             pinnedCountryCode = null;
             updateCountryPanel(null, selectedFilter);
             hideTooltip();
-            return;
+            globe.controls().autoRotate = true;
           }
-
-          if (pinnedCountryCode === code) {
-            pinnedCountryCode = null;
-            updateCountryPanel(null, selectedFilter);
-          } else {
-            pinnedCountryCode = code;
-            updateCountryPanel(countryProfiles[code], selectedFilter, true);
-            const center = getFeatureCenter(feature);
-            globe.pointOfView({ lat: center.lat, lng: center.lng, altitude: 1.5 }, 900);
-          }
-          hideTooltip();
         });
 
       globe.controls().autoRotate = true;
