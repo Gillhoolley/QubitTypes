@@ -440,11 +440,11 @@
       summaryEl.textContent = `${label}: ${activeCodes.size} active countries and ${companyCount.size} organizations/institutions tracked in this view.`;
     }
 
-    function updateCountryPanel(profile, filterId) {
+    function updateCountryPanel(profile, filterId, isPinned = false) {
       if (!profile) {
         countryInfoEl.innerHTML = `
           <h3>Country Details</h3>
-          <p class="hint">Hover over an active country to see technologies, companies, institutions, and initiatives.</p>
+          <p class="hint">Hover over an active country, or click to pin details.</p>
         `;
         return;
       }
@@ -464,7 +464,10 @@
       const initiativeList = Array.from(profile.initiatives).slice(0, 6).map((item) => `<li>${item}</li>`).join("");
 
       countryInfoEl.innerHTML = `
-        <h3>${profile.country}</h3>
+        <h3 style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;">
+          <span>${profile.country}</span>
+          ${isPinned ? "<button id='unpinCountryBtn' class='btn' type='button' style='padding:0.26rem 0.48rem;font-size:0.72rem;'>Unpin</button>" : ""}
+        </h3>
         <div class="tag-wrap">${tagsHtml || "<span class='hint'>No data for selected filter</span>"}</div>
         <p class="hint">Organizations and institutions</p>
         <ul class="small-list">${orgList || "<li>No entries</li>"}</ul>
@@ -601,7 +604,7 @@
             updateCountryPanel(null, selectedFilter);
           } else {
             pinnedCountryCode = code;
-            updateCountryPanel(countryProfiles[code], selectedFilter);
+            updateCountryPanel(countryProfiles[code], selectedFilter, true);
             const center = getFeatureCenter(feature);
             globe.pointOfView({ lat: center.lat, lng: center.lng, altitude: 1.5 }, 900);
           }
@@ -615,12 +618,20 @@
         globe.controls().autoRotate = true;
       });
 
+      countryInfoEl.addEventListener("click", (event) => {
+        if (!(event.target instanceof HTMLElement)) return;
+        if (event.target.id !== "unpinCountryBtn") return;
+        pinnedCountryCode = null;
+        hideTooltip();
+        updateCountryPanel(null, selectedFilter);
+      });
+
       selectEl.addEventListener("change", (event) => {
         selectedFilter = event.target.value;
         setSummary(selectedFilter);
         hideTooltip();
         if (pinnedCountryCode && activeCodes().has(pinnedCountryCode)) {
-          updateCountryPanel(countryProfiles[pinnedCountryCode], selectedFilter);
+          updateCountryPanel(countryProfiles[pinnedCountryCode], selectedFilter, true);
         } else {
           pinnedCountryCode = null;
           updateCountryPanel(null, selectedFilter);
