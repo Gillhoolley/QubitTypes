@@ -747,15 +747,11 @@
 
       const controls = globe.controls();
       let rotateResumeTimer = null;
-      const pauseAutoRotate = () => {
-        if (rotateResumeTimer) clearTimeout(rotateResumeTimer);
-        controls.autoRotate = false;
-      };
       const scheduleAutoRotate = () => {
         if (rotateResumeTimer) clearTimeout(rotateResumeTimer);
         rotateResumeTimer = setTimeout(() => {
           controls.autoRotate = true;
-        }, 4000);
+        }, 800);
       };
 
       controls.autoRotate = true;
@@ -764,8 +760,6 @@
       controls.enableDamping = true;
       controls.dampingFactor = 0.1;
       controls.rotateSpeed = 0.6;
-      controls.addEventListener("start", pauseAutoRotate);
-      controls.addEventListener("end", scheduleAutoRotate);
 
       countryInfoEl.addEventListener("click", (event) => {
         if (!(event.target instanceof HTMLElement)) return;
