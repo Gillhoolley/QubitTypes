@@ -356,6 +356,7 @@
       { id: "diamondNV", label: "Diamond NV Center Qubits", color: "var(--diamondnv)" },
       { id: "nmr", label: "NMR Qubits", color: "var(--nmr)" }
     ];
+    const ENABLE_CENTER_ON_SELECT = false;
 
     const colorMap = Object.fromEntries(qubitConfig.map((q) => [q.id, q.color]));
 
@@ -872,11 +873,15 @@
             updateCountryPanel(countryProfiles[code], selectedFilter, true);
             updateCountryTechSnapshotCard(selectedFilter, countryProfiles[code]);
             countrySelectEl.value = code;
-            const center = getFeatureCenter(feature);
-            globe.pointOfView({ lat: center.lat, lng: center.lng, altitude: 1.5 }, 900);
-            setTimeout(() => {
+            if (ENABLE_CENTER_ON_SELECT) {
+              const center = getFeatureCenter(feature);
+              globe.pointOfView({ lat: center.lat, lng: center.lng, altitude: 1.5 }, 900);
+              setTimeout(() => {
+                scheduleAutoRotate();
+              }, 950);
+            } else {
               scheduleAutoRotate();
-            }, 950);
+            }
             hideTooltip();
           } catch (error) {
             pinnedCountryCode = null;
@@ -897,11 +902,15 @@
             countrySelectEl.value = code;
             updateCountryPanel(profile, selectedFilter, true);
             updateCountryTechSnapshotCard(selectedFilter, profile);
-            const center = getFeatureCenter(feature);
-            globe.pointOfView({ lat: center.lat, lng: center.lng, altitude: 1.5 }, 900);
-            setTimeout(() => {
+            if (ENABLE_CENTER_ON_SELECT) {
+              const center = getFeatureCenter(feature);
+              globe.pointOfView({ lat: center.lat, lng: center.lng, altitude: 1.5 }, 900);
+              setTimeout(() => {
+                scheduleAutoRotate();
+              }, 950);
+            } else {
               scheduleAutoRotate();
-            }, 950);
+            }
           } catch (error) {
             scheduleAutoRotate();
           }
@@ -969,11 +978,15 @@
 
         const feature = featuresByCode.get(code);
         if (feature) {
-          const center = getFeatureCenter(feature);
-          globe.pointOfView({ lat: center.lat, lng: center.lng, altitude: 1.5 }, 900);
-          setTimeout(() => {
+          if (ENABLE_CENTER_ON_SELECT) {
+            const center = getFeatureCenter(feature);
+            globe.pointOfView({ lat: center.lat, lng: center.lng, altitude: 1.5 }, 900);
+            setTimeout(() => {
+              scheduleAutoRotate();
+            }, 950);
+          } else {
             scheduleAutoRotate();
-          }, 950);
+          }
         }
       });
 
