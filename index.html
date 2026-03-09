@@ -318,7 +318,7 @@
           </div>
         </section>
 
-        <section class="stat-block">
+        <section class="stat-block" id="technologyColorsCard">
           <h2>Technology Colors</h2>
           <ul class="legend" id="legend"></ul>
         </section>
@@ -482,6 +482,7 @@
     const selectEl = document.getElementById("qubitSelect");
     const countrySelectEl = document.getElementById("countrySelect");
     const legendEl = document.getElementById("legend");
+    const technologyColorsCardEl = document.getElementById("technologyColorsCard");
     const summaryEl = document.getElementById("summaryText");
     const techFocusEl = document.getElementById("techFocusContent");
     const countryTechSnapshotEl = document.getElementById("countryTechSnapshotContent");
@@ -645,6 +646,11 @@
         <p class="hint" style="margin:0.35rem 0 0.15rem;">Active universities</p>
         <ul class="small-list">${universities.length ? universities.map((u) => `<li>${u}</li>`).join("") : "<li>No entries</li>"}</ul>
       `;
+    }
+
+    function updateCardVisibility(filterId, profile, isPinned = false) {
+      const shouldHideTechnologyColors = filterId === "all" && isPinned && !!profile;
+      technologyColorsCardEl.style.display = shouldHideTechnologyColors ? "none" : "";
     }
 
     function updateCountryPanel(profile, filterId, isPinned = false) {
@@ -864,6 +870,7 @@
               pinnedCountryCode = null;
               updateCountryPanel(countryProfiles.USA || null, selectedFilter);
               updateCountryTechSnapshotCard(selectedFilter, countryProfiles.USA || null);
+              updateCardVisibility(selectedFilter, countryProfiles.USA || null, false);
               countrySelectEl.value = "USA";
               hideTooltip();
               return;
@@ -872,6 +879,7 @@
             pinnedCountryCode = code;
             updateCountryPanel(countryProfiles[code], selectedFilter, true);
             updateCountryTechSnapshotCard(selectedFilter, countryProfiles[code]);
+            updateCardVisibility(selectedFilter, countryProfiles[code], true);
             countrySelectEl.value = code;
             if (ENABLE_CENTER_ON_SELECT) {
               const center = getFeatureCenter(feature);
@@ -887,6 +895,7 @@
             pinnedCountryCode = null;
             updateCountryPanel(countryProfiles.USA || null, selectedFilter);
             updateCountryTechSnapshotCard(selectedFilter, countryProfiles.USA || null);
+            updateCardVisibility(selectedFilter, countryProfiles.USA || null, false);
             hideTooltip();
             scheduleAutoRotate();
           }
@@ -902,6 +911,7 @@
             countrySelectEl.value = code;
             updateCountryPanel(profile, selectedFilter, true);
             updateCountryTechSnapshotCard(selectedFilter, profile);
+            updateCardVisibility(selectedFilter, profile, true);
             if (ENABLE_CENTER_ON_SELECT) {
               const center = getFeatureCenter(feature);
               globe.pointOfView({ lat: center.lat, lng: center.lng, altitude: 1.5 }, 900);
@@ -951,6 +961,7 @@
         countrySelectEl.value = "USA";
         updateCountryPanel(countryProfiles.USA || null, selectedFilter);
         updateCountryTechSnapshotCard(selectedFilter, countryProfiles.USA || null);
+        updateCardVisibility(selectedFilter, countryProfiles.USA || null, false);
       });
 
       selectEl.addEventListener("change", (event) => {
@@ -961,12 +972,14 @@
         if (pinnedCountryCode && activeCodes().has(pinnedCountryCode)) {
           updateCountryPanel(countryProfiles[pinnedCountryCode], selectedFilter, true);
           updateCountryTechSnapshotCard(selectedFilter, countryProfiles[pinnedCountryCode]);
+          updateCardVisibility(selectedFilter, countryProfiles[pinnedCountryCode], true);
           countrySelectEl.value = pinnedCountryCode;
         } else {
           pinnedCountryCode = null;
           countrySelectEl.value = "USA";
           updateCountryPanel(countryProfiles.USA || null, selectedFilter);
           updateCountryTechSnapshotCard(selectedFilter, countryProfiles.USA || null);
+          updateCardVisibility(selectedFilter, countryProfiles.USA || null, false);
         }
         globe
           .polygonCapColor(globe.polygonCapColor())
@@ -982,6 +995,7 @@
         pinnedCountryCode = code;
         updateCountryPanel(profile, selectedFilter, true);
         updateCountryTechSnapshotCard(selectedFilter, profile);
+        updateCardVisibility(selectedFilter, profile, true);
         hideTooltip();
 
         const feature = featuresByCode.get(code);
@@ -1002,6 +1016,7 @@
       updateTechFocusCard(selectedFilter);
       updateCountryPanel(countryProfiles.USA || null, selectedFilter);
       updateCountryTechSnapshotCard(selectedFilter, countryProfiles.USA || null);
+      updateCardVisibility(selectedFilter, countryProfiles.USA || null, false);
 
       window.addEventListener("resize", () => {
         globe.width(globeEl.clientWidth);
