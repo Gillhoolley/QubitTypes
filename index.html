@@ -577,6 +577,28 @@
       `;
     }
 
+    function parseInvestmentUsdBillions(value) {
+      if (!value || typeof value !== "string") return 0;
+      const cleaned = value.replace("$", "").replace("B", "").trim();
+      const num = Number(cleaned);
+      return Number.isFinite(num) ? num : 0;
+    }
+
+    function formatUsdBillions(value) {
+      return `$${value.toFixed(1)}B`;
+    }
+
+    function getCountryTotalInvestment(profile) {
+      if (!profile) return null;
+      let total = 0;
+      Object.keys(countryInvestmentByType).forEach((techId) => {
+        const byCountry = countryInvestmentByType[techId] || {};
+        const raw = byCountry[profile.iso3];
+        total += parseInvestmentUsdBillions(raw);
+      });
+      return total > 0 ? formatUsdBillions(total) : "N/A";
+    }
+
     function splitOrganizations(orgs) {
       const companies = [];
       const universities = [];
@@ -637,11 +659,13 @@
       const hqCompanies = split.companies.slice(0, 5);
       const universities = split.universities.slice(0, 6);
       const investment = countryInvestmentByType[filterId]?.[profile.iso3] || "N/A";
+      const totalCountryInvestment = getCountryTotalInvestment(profile);
 
       countryTechSnapshotEl.innerHTML = `
         <p class="hint"><strong style="color:#e8f1f7;">Qubit type:</strong> ${techLabel}</p>
         <p class="hint"><strong style="color:#e8f1f7;">Country highlighted:</strong> ${profile.country}</p>
         <p class="hint"><strong style="color:#e8f1f7;">Money invested:</strong> ${investment}</p>
+        <p class="hint"><strong style="color:#e8f1f7;">Total across tracked qubit types:</strong> ${totalCountryInvestment}</p>
         <p class="hint" style="margin:0.35rem 0 0.15rem;">HQ companies (3-5)</p>
         <ul class="small-list">${hqCompanies.length ? hqCompanies.map((c) => `<li>${c}</li>`).join("") : "<li>No entries</li>"}</ul>
         <p class="hint" style="margin:0.35rem 0 0.15rem;">Active universities</p>
@@ -689,6 +713,7 @@
       const selectedTechInvestment = filterId === "all"
         ? null
         : (countryInvestmentByType[filterId]?.[profile.iso3] || "N/A");
+      const totalCountryInvestment = getCountryTotalInvestment(profile);
       const selectedTechLabel = qubitConfig.find((q) => q.id === filterId)?.label || filterId;
       const innovationSnapshotHtml = filterId === "all"
         ? `<p class="hint" style="margin:0.55rem 0 0;">Select a specific qubit type to view country-level investment and 3-5 key companies.</p>`
@@ -710,6 +735,7 @@
         <ul class="small-list">${orgList || "<li>No entries</li>"}</ul>
         <p class="hint" style="margin-top:0.5rem;">Government initiatives</p>
         <ul class="small-list">${initiativeList || "<li>No entries</li>"}</ul>
+        <p class="hint" style="margin-top:0.55rem;"><strong style="color:#e8f1f7;">Total quantum investment (all tracked qubit types):</strong> ${totalCountryInvestment}</p>
         ${innovationSnapshotHtml}
       `;
     }
