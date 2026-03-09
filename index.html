@@ -399,6 +399,17 @@
       diamondNV: "$3.9B",
       nmr: "$2.1B"
     };
+    const countryInvestmentByType = {
+      photonic: { USA: "$3.2B", CAN: "$1.4B", GBR: "$1.1B", JPN: "$0.8B", CHN: "$1.6B" },
+      topological: { USA: "$1.7B", NLD: "$0.9B", DEU: "$0.8B", SWE: "$0.5B", GBR: "$0.7B" },
+      ionTrap: { USA: "$2.4B", GBR: "$1.2B", AUT: "$0.5B", CHE: "$0.6B", FRA: "$0.8B" },
+      semiconductor: { AUS: "$1.1B", USA: "$1.9B", NLD: "$0.8B", JPN: "$0.9B", KOR: "$0.7B" },
+      superconducting: { USA: "$5.1B", CHN: "$2.7B", FIN: "$0.9B", FRA: "$1.4B", JPN: "$1.3B" },
+      neutralAtom: { FRA: "$1.3B", USA: "$1.9B", GBR: "$0.9B", DEU: "$0.8B", ISR: "$0.6B" },
+      quantumDot: { USA: "$1.5B", AUS: "$0.9B", DEU: "$0.8B", JPN: "$0.7B", SGP: "$0.5B" },
+      diamondNV: { USA: "$1.2B", DEU: "$0.7B", GBR: "$0.6B", AUS: "$0.7B", CHE: "$0.5B" },
+      nmr: { USA: "$0.7B", IND: "$0.4B", JPN: "$0.3B", BRA: "$0.2B", ESP: "$0.2B" }
+    };
 
     const countryProfiles = {};
 
@@ -536,6 +547,21 @@
 
       const orgList = Array.from(profile.organizations).slice(0, 8).map((org) => `<li>${org}</li>`).join("");
       const initiativeList = Array.from(profile.initiatives).slice(0, 6).map((item) => `<li>${item}</li>`).join("");
+      const selectedTechRow = filterId === "all" ? null : (qubitData[filterId] || []).find((row) => row.iso3 === profile.iso3);
+      const selectedTechCompanies = selectedTechRow ? selectedTechRow.orgs.slice(0, 5) : [];
+      const selectedTechInvestment = filterId === "all"
+        ? null
+        : (countryInvestmentByType[filterId]?.[profile.iso3] || "N/A");
+      const selectedTechLabel = qubitConfig.find((q) => q.id === filterId)?.label || filterId;
+      const innovationSnapshotHtml = filterId === "all"
+        ? `<p class="hint" style="margin:0.55rem 0 0;">Select a specific qubit type to view country-level investment and 3-5 key companies.</p>`
+        : `
+          <p class="hint" style="margin-top:0.55rem;">Innovation snapshot for ${selectedTechLabel}</p>
+          <ul class="small-list">
+            <li><strong>Investment to date:</strong> ${selectedTechInvestment}</li>
+            <li><strong>Key companies/institutions:</strong> ${selectedTechCompanies.length ? selectedTechCompanies.join(", ") : "No entries"}</li>
+          </ul>
+        `;
 
       countryInfoEl.innerHTML = `
         <h3 style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;">
@@ -547,6 +573,7 @@
         <ul class="small-list">${orgList || "<li>No entries</li>"}</ul>
         <p class="hint" style="margin-top:0.5rem;">Government initiatives</p>
         <ul class="small-list">${initiativeList || "<li>No entries</li>"}</ul>
+        ${innovationSnapshotHtml}
       `;
     }
 
