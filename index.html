@@ -266,7 +266,7 @@
         <p>Interactive map of countries and organizations advancing qubit technologies</p>
       </div>
       <div class="controls">
-        <label for="qubitSelect">Qubit Type</label>
+        <label for="qubitSelect">Qubit Type Filter</label>
         <select id="qubitSelect" aria-label="Filter by qubit technology"></select>
       </div>
     </nav>
@@ -287,7 +287,7 @@
 
         <section id="countryInfo">
           <h3>Country Details</h3>
-          <p class="hint">Hover over an active country, or click to pin details.</p>
+          <p class="hint">Click a country to show details. Hover shows quick tooltip only.</p>
         </section>
       </aside>
 
@@ -453,7 +453,7 @@
       if (!profile) {
         countryInfoEl.innerHTML = `
           <h3>Country Details</h3>
-          <p class="hint">Hover over an active country, or click to pin details.</p>
+          <p class="hint">Click a country to show details. Hover shows quick tooltip only.</p>
         `;
         return;
       }
@@ -612,7 +612,6 @@
             return;
           }
 
-          updateCountryPanel(profile, selectedFilter);
           showTooltip(evt.clientX, evt.clientY, tooltipHtml(profile, selectedFilter));
         })
         .onPolygonClick((feature) => {
@@ -621,14 +620,14 @@
             const code = countryCode(feature);
             if (!code || !activeCodes().has(code)) {
               pinnedCountryCode = null;
-              updateCountryPanel(null, selectedFilter);
+              updateCountryPanel(countryProfiles.USA || null, selectedFilter);
               hideTooltip();
               return;
             }
 
             if (pinnedCountryCode === code) {
               pinnedCountryCode = null;
-              updateCountryPanel(null, selectedFilter);
+              updateCountryPanel(countryProfiles.USA || null, selectedFilter);
             } else {
               pinnedCountryCode = code;
               updateCountryPanel(countryProfiles[code], selectedFilter, true);
@@ -641,7 +640,7 @@
             hideTooltip();
           } catch (error) {
             pinnedCountryCode = null;
-            updateCountryPanel(null, selectedFilter);
+            updateCountryPanel(countryProfiles.USA || null, selectedFilter);
             hideTooltip();
             scheduleAutoRotate();
           }
@@ -674,7 +673,7 @@
         if (event.target.id !== "unpinCountryBtn") return;
         pinnedCountryCode = null;
         hideTooltip();
-        updateCountryPanel(null, selectedFilter);
+        updateCountryPanel(countryProfiles.USA || null, selectedFilter);
       });
 
       selectEl.addEventListener("change", (event) => {
@@ -685,7 +684,7 @@
           updateCountryPanel(countryProfiles[pinnedCountryCode], selectedFilter, true);
         } else {
           pinnedCountryCode = null;
-          updateCountryPanel(null, selectedFilter);
+          updateCountryPanel(countryProfiles.USA || null, selectedFilter);
         }
         globe
           .polygonCapColor(globe.polygonCapColor())
