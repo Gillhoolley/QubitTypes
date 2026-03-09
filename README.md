@@ -2,6 +2,8 @@
 
 This project contains a standalone interactive webpage that visualizes global qubit technology development on a rotating globe.
 
+Live report: https://impactquantum.com/QubitTypes/
+
 ## What is implemented
 
 - Rotating 3D globe with country-level highlighting
