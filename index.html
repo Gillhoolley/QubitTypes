@@ -115,6 +115,7 @@
       height: calc(100vh - 68px);
       min-height: 440px;
       cursor: grab;
+      overflow: hidden;
     }
 
     #globeViz:active {
@@ -800,6 +801,9 @@
             scheduleAutoRotate();
           }
         });
+
+      globe.width(globeEl.clientWidth);
+      globe.height(globeEl.clientHeight);
 
       const controls = globe.controls();
       let rotateResumeTimer = null;
