@@ -23,6 +23,18 @@ Live report: https://impactquantum.com/QubitTypes/
 
 Open `index.html` in a browser to run the visualization.
 
+## Raw data folder convention
+
+Use lowercase kebab-case for all `RawData` directories.
+
+Current directories:
+
+- `RawData/photonics`
+- `RawData/semiconducting-qubits`
+- `RawData/semiconductor-spin`
+- `RawData/topological`
+- `RawData/trapped-ion`
+
 ## Qubit color mapping
 
 - Photonic — Dark Green
