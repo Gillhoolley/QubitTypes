@@ -35,6 +35,18 @@ Current directories:
 - `RawData/topological`
 - `RawData/trapped-ion`
 
+### Semiconductor folder merge note
+
+`semiconducting-qubits` and `semiconductor-spin` currently overlap in scope.
+
+- `semiconductor-spin` is a specific qubit modality (spin-based semiconductor qubits) and matches the taxonomy used by the visualization.
+- `semiconducting-qubits` reads as a broader umbrella label and can duplicate records, country counts, and organization attribution if both are treated as separate peer categories.
+
+Recommended approach:
+
+- Keep `RawData/semiconductor-spin` as the canonical category for the current map/report taxonomy.
+- Merge overlapping files from `RawData/semiconducting-qubits` into `RawData/semiconductor-spin`, or use `semiconducting-qubits` only as a temporary intake/staging folder before normalization.
+
 ## Qubit color mapping
 
 - Photonic — Dark Green
