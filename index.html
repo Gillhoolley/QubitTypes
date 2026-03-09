@@ -440,7 +440,7 @@
         option.textContent = item.label;
         selectEl.append(option);
       });
-      selectEl.value = "all";
+      selectEl.value = "photonic";
     }
 
     function fillCountryDropdown() {
@@ -595,7 +595,7 @@
         if (code) featuresByCode.set(code, feature);
       });
 
-      let selectedFilter = "all";
+      let selectedFilter = "photonic";
       let pinnedCountryCode = null;
       const activeCodes = () => getActiveCountryCodes(selectedFilter);
       const countryCode = (feature) => feature?.properties?.ISO_A3 || feature?.id;
