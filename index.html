@@ -278,7 +278,7 @@
 
         <section id="countryInfo">
           <h3>Country Details</h3>
-          <p class="hint">Hover over an active country to see technologies, companies, institutions, and initiatives.</p>
+          <p class="hint">Hover over an active country, or click to pin details.</p>
         </section>
       </aside>
 
@@ -513,7 +513,29 @@
       const countries = worldGeo.features;
 
       let selectedFilter = "all";
+      let pinnedCountryCode = null;
       const activeCodes = () => getActiveCountryCodes(selectedFilter);
+      const countryCode = (feature) => feature?.properties?.ISO_A3 || feature?.id;
+      const getFeatureCenter = (feature) => {
+        const bounds = { minLng: 180, maxLng: -180, minLat: 90, maxLat: -90 };
+        const walk = (coords) => {
+          if (!Array.isArray(coords)) return;
+          if (typeof coords[0] === "number" && typeof coords[1] === "number") {
+            const [lng, lat] = coords;
+            bounds.minLng = Math.min(bounds.minLng, lng);
+            bounds.maxLng = Math.max(bounds.maxLng, lng);
+            bounds.minLat = Math.min(bounds.minLat, lat);
+            bounds.maxLat = Math.max(bounds.maxLat, lat);
+            return;
+          }
+          coords.forEach(walk);
+        };
+        walk(feature?.geometry?.coordinates);
+        return {
+          lng: (bounds.minLng + bounds.maxLng) / 2,
+          lat: (bounds.minLat + bounds.maxLat) / 2
+        };
+      };
 
       const globe = Globe()(globeEl)
         .globeImageUrl("https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg")
@@ -523,7 +545,7 @@
         .atmosphereColor("#7fc8ff")
         .atmosphereAltitude(0.2)
         .polygonCapColor((feature) => {
-          const code = feature.properties.ISO_A3 || feature.id;
+          const code = countryCode(feature);
           if (!activeCodes().has(code)) return "rgba(115,130,143,0.12)";
           const useColor = selectedFilter === "all"
             ? cssVarColor(colorMap.all)
@@ -532,22 +554,27 @@
         })
         .polygonSideColor(() => "rgba(0, 50, 88, 0.15)")
         .polygonStrokeColor((feature) => {
-          const code = feature.properties.ISO_A3 || feature.id;
+          const code = countryCode(feature);
           return activeCodes().has(code) ? "rgba(230, 244, 255, 0.55)" : "rgba(107, 131, 152, 0.22)";
         })
         .polygonAltitude((feature) => {
-          const code = feature.properties.ISO_A3 || feature.id;
+          const code = countryCode(feature);
           return activeCodes().has(code) ? 0.018 : 0.005;
         })
         .polygonsData(countries)
         .onPolygonHover((feature, prevFeature, evt) => {
+          if (pinnedCountryCode) {
+            hideTooltip();
+            return;
+          }
+
           if (!feature) {
             hideTooltip();
             updateCountryPanel(null, selectedFilter);
             return;
           }
 
-          const code = feature.properties.ISO_A3 || feature.id;
+          const code = countryCode(feature);
           const profile = countryProfiles[code];
 
           if (!profile || !activeCodes().has(code)) {
@@ -558,17 +585,46 @@
 
           updateCountryPanel(profile, selectedFilter);
           showTooltip(evt.clientX, evt.clientY, tooltipHtml(profile, selectedFilter));
+        })
+        .onPolygonClick((feature) => {
+          if (!feature) return;
+          const code = countryCode(feature);
+          if (!code || !activeCodes().has(code)) {
+            pinnedCountryCode = null;
+            updateCountryPanel(null, selectedFilter);
+            hideTooltip();
+            return;
+          }
+
+          if (pinnedCountryCode === code) {
+            pinnedCountryCode = null;
+            updateCountryPanel(null, selectedFilter);
+          } else {
+            pinnedCountryCode = code;
+            updateCountryPanel(countryProfiles[code], selectedFilter);
+            const center = getFeatureCenter(feature);
+            globe.pointOfView({ lat: center.lat, lng: center.lng, altitude: 1.5 }, 900);
+          }
+          hideTooltip();
         });
 
       globe.controls().autoRotate = true;
       globe.controls().autoRotateSpeed = 0.55;
       globe.controls().enablePan = false;
+      globe.controls().addEventListener("end", () => {
+        globe.controls().autoRotate = true;
+      });
 
       selectEl.addEventListener("change", (event) => {
         selectedFilter = event.target.value;
         setSummary(selectedFilter);
         hideTooltip();
-        updateCountryPanel(null, selectedFilter);
+        if (pinnedCountryCode && activeCodes().has(pinnedCountryCode)) {
+          updateCountryPanel(countryProfiles[pinnedCountryCode], selectedFilter);
+        } else {
+          pinnedCountryCode = null;
+          updateCountryPanel(null, selectedFilter);
+        }
         globe
           .polygonCapColor(globe.polygonCapColor())
           .polygonAltitude(globe.polygonAltitude())
