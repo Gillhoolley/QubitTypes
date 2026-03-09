@@ -106,6 +106,11 @@
       width: 100%;
       height: calc(100vh - 68px);
       min-height: 440px;
+      cursor: grab;
+    }
+
+    #globeViz:active {
+      cursor: grabbing;
     }
 
     .side-panel {
@@ -632,7 +637,7 @@
               const center = getFeatureCenter(feature);
               globe.pointOfView({ lat: center.lat, lng: center.lng, altitude: 1.5 }, 900);
               setTimeout(() => {
-                globe.controls().autoRotate = true;
+                scheduleAutoRotate();
               }, 950);
             }
             hideTooltip();
@@ -640,16 +645,31 @@
             pinnedCountryCode = null;
             updateCountryPanel(null, selectedFilter);
             hideTooltip();
-            globe.controls().autoRotate = true;
+            scheduleAutoRotate();
           }
         });
 
-      globe.controls().autoRotate = true;
-      globe.controls().autoRotateSpeed = 0.55;
-      globe.controls().enablePan = false;
-      globe.controls().addEventListener("end", () => {
-        globe.controls().autoRotate = true;
-      });
+      const controls = globe.controls();
+      let rotateResumeTimer = null;
+      const pauseAutoRotate = () => {
+        if (rotateResumeTimer) clearTimeout(rotateResumeTimer);
+        controls.autoRotate = false;
+      };
+      const scheduleAutoRotate = () => {
+        if (rotateResumeTimer) clearTimeout(rotateResumeTimer);
+        rotateResumeTimer = setTimeout(() => {
+          controls.autoRotate = true;
+        }, 4000);
+      };
+
+      controls.autoRotate = true;
+      controls.autoRotateSpeed = 0.55;
+      controls.enablePan = false;
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.1;
+      controls.rotateSpeed = 0.6;
+      controls.addEventListener("start", pauseAutoRotate);
+      controls.addEventListener("end", scheduleAutoRotate);
 
       countryInfoEl.addEventListener("click", (event) => {
         if (!(event.target instanceof HTMLElement)) return;
