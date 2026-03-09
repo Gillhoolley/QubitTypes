@@ -638,6 +638,22 @@
           lat
         };
       };
+      const getLabelData = () => {
+        const codes = Array.from(activeCodes());
+        return codes
+          .map((code) => {
+            const feature = featuresByCode.get(code);
+            const profile = countryProfiles[code];
+            if (!feature || !profile) return null;
+            const center = getFeatureCenter(feature);
+            return {
+              lat: center.lat,
+              lng: center.lng,
+              name: profile.country
+            };
+          })
+          .filter(Boolean);
+      };
 
       const globe = Globe()(globeEl)
         .globeImageUrl("https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg")
@@ -663,6 +679,15 @@
           const code = countryCode(feature);
           return activeCodes().has(code) ? 0.018 : 0.005;
         })
+        .labelsData(getLabelData())
+        .labelText("name")
+        .labelLat("lat")
+        .labelLng("lng")
+        .labelSize(0.95)
+        .labelColor(() => "rgba(234, 246, 255, 0.92)")
+        .labelResolution(2)
+        .labelDotRadius(0.11)
+        .labelAltitude(0.025)
         .polygonsData(countries)
         .onPolygonHover((feature, prevFeature, evt) => {
           if (pinnedCountryCode) {
@@ -767,7 +792,8 @@
         globe
           .polygonCapColor(globe.polygonCapColor())
           .polygonAltitude(globe.polygonAltitude())
-          .polygonStrokeColor(globe.polygonStrokeColor());
+          .polygonStrokeColor(globe.polygonStrokeColor())
+          .labelsData(getLabelData());
       });
 
       countrySelectEl.addEventListener("change", (event) => {
