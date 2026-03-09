@@ -694,7 +694,7 @@
       });
 
       setSummary(selectedFilter);
-      updateCountryPanel(null, selectedFilter);
+      updateCountryPanel(countryProfiles.USA || null, selectedFilter);
 
       window.addEventListener("resize", () => {
         globe.width(globeEl.clientWidth);
