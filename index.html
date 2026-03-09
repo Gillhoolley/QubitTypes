@@ -305,7 +305,7 @@
     <main class="content">
       <div id="globeViz"></div>
 
-      <aside class="side-panel">
+      <aside class="side-panel" id="sidePanel">
         <section class="stat-block">
           <h2>Global Snapshot</h2>
           <p id="summaryText"></p>
@@ -483,6 +483,7 @@
     const countrySelectEl = document.getElementById("countrySelect");
     const legendEl = document.getElementById("legend");
     const technologyColorsCardEl = document.getElementById("technologyColorsCard");
+    const sidePanelEl = document.getElementById("sidePanel");
     const summaryEl = document.getElementById("summaryText");
     const techFocusEl = document.getElementById("techFocusContent");
     const countryTechSnapshotEl = document.getElementById("countryTechSnapshotContent");
@@ -651,6 +652,14 @@
     function updateCardVisibility(filterId, profile, isPinned = false) {
       const shouldHideTechnologyColors = filterId === "all" && isPinned && !!profile;
       technologyColorsCardEl.style.display = shouldHideTechnologyColors ? "none" : "";
+    }
+
+    function repositionTechnologyColorsCard(filterId) {
+      if (filterId === "all") {
+        sidePanelEl.insertBefore(technologyColorsCardEl, countryTechSnapshotEl.parentElement);
+      } else {
+        sidePanelEl.appendChild(technologyColorsCardEl);
+      }
     }
 
     function updateCountryPanel(profile, filterId, isPinned = false) {
@@ -871,6 +880,7 @@
               updateCountryPanel(countryProfiles.USA || null, selectedFilter);
               updateCountryTechSnapshotCard(selectedFilter, countryProfiles.USA || null);
               updateCardVisibility(selectedFilter, countryProfiles.USA || null, false);
+              repositionTechnologyColorsCard(selectedFilter);
               countrySelectEl.value = "USA";
               hideTooltip();
               return;
@@ -880,6 +890,7 @@
             updateCountryPanel(countryProfiles[code], selectedFilter, true);
             updateCountryTechSnapshotCard(selectedFilter, countryProfiles[code]);
             updateCardVisibility(selectedFilter, countryProfiles[code], true);
+            repositionTechnologyColorsCard(selectedFilter);
             countrySelectEl.value = code;
             if (ENABLE_CENTER_ON_SELECT) {
               const center = getFeatureCenter(feature);
@@ -896,6 +907,7 @@
             updateCountryPanel(countryProfiles.USA || null, selectedFilter);
             updateCountryTechSnapshotCard(selectedFilter, countryProfiles.USA || null);
             updateCardVisibility(selectedFilter, countryProfiles.USA || null, false);
+            repositionTechnologyColorsCard(selectedFilter);
             hideTooltip();
             scheduleAutoRotate();
           }
@@ -912,6 +924,7 @@
             updateCountryPanel(profile, selectedFilter, true);
             updateCountryTechSnapshotCard(selectedFilter, profile);
             updateCardVisibility(selectedFilter, profile, true);
+            repositionTechnologyColorsCard(selectedFilter);
             if (ENABLE_CENTER_ON_SELECT) {
               const center = getFeatureCenter(feature);
               globe.pointOfView({ lat: center.lat, lng: center.lng, altitude: 1.5 }, 900);
@@ -962,12 +975,14 @@
         updateCountryPanel(countryProfiles.USA || null, selectedFilter);
         updateCountryTechSnapshotCard(selectedFilter, countryProfiles.USA || null);
         updateCardVisibility(selectedFilter, countryProfiles.USA || null, false);
+        repositionTechnologyColorsCard(selectedFilter);
       });
 
       selectEl.addEventListener("change", (event) => {
         selectedFilter = event.target.value;
         setSummary(selectedFilter);
         updateTechFocusCard(selectedFilter);
+        repositionTechnologyColorsCard(selectedFilter);
         hideTooltip();
         if (pinnedCountryCode && activeCodes().has(pinnedCountryCode)) {
           updateCountryPanel(countryProfiles[pinnedCountryCode], selectedFilter, true);
@@ -996,6 +1011,7 @@
         updateCountryPanel(profile, selectedFilter, true);
         updateCountryTechSnapshotCard(selectedFilter, profile);
         updateCardVisibility(selectedFilter, profile, true);
+        repositionTechnologyColorsCard(selectedFilter);
         hideTooltip();
 
         const feature = featuresByCode.get(code);
@@ -1017,6 +1033,7 @@
       updateCountryPanel(countryProfiles.USA || null, selectedFilter);
       updateCountryTechSnapshotCard(selectedFilter, countryProfiles.USA || null);
       updateCardVisibility(selectedFilter, countryProfiles.USA || null, false);
+      repositionTechnologyColorsCard(selectedFilter);
 
       window.addEventListener("resize", () => {
         globe.width(globeEl.clientWidth);
