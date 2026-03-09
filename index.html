@@ -103,8 +103,11 @@
     .content {
       position: relative;
       display: grid;
-      grid-template-columns: 1fr 330px;
+      grid-template-columns: minmax(0, 1.75fr) minmax(360px, 1fr);
+      gap: 0.8rem;
+      padding: 0.6rem 0.6rem 0.6rem 0;
       min-height: 0;
+      align-items: start;
     }
 
     #globeViz {
@@ -119,12 +122,13 @@
     }
 
     .side-panel {
-      border-left: 1px solid var(--border);
+      border: 1px solid var(--border);
+      border-radius: 0.7rem;
       background: var(--panel);
       backdrop-filter: blur(6px);
       padding: 1rem;
       overflow-y: auto;
-      height: calc(100vh - 68px);
+      height: calc(100vh - 82px);
     }
 
     .stat-block {
@@ -213,6 +217,10 @@
       line-height: 1.4;
     }
 
+    .country-list li {
+      font-weight: 700;
+    }
+
     .tooltip {
       position: fixed;
       pointer-events: none;
@@ -267,8 +275,7 @@
 
       .side-panel {
         height: auto;
-        border-left: 0;
-        border-top: 1px solid var(--border);
+        border-left: 1px solid var(--border);
       }
 
       #globeViz {
@@ -540,7 +547,7 @@
         <p class="hint" style="margin:0 0 0.45rem;"><strong style="color:#e8f1f7;">${label}</strong></p>
         <p class="hint" style="margin:0 0 0.45rem;"><strong style="color:#e8f1f7;">Global investment:</strong> ${investment}</p>
         <p class="hint" style="margin:0.3rem 0 0.15rem;">Countries involved (${countries.length})</p>
-        <ul class="small-list">${countryList || "<li>No entries</li>"}</ul>
+        <ul class="small-list country-list">${countryList || "<li>No entries</li>"}</ul>
         <p class="hint" style="margin:0.45rem 0 0.15rem;">Major organizations (${organizations.length})</p>
         <ul class="small-list">${orgList || "<li>No entries</li>"}</ul>
       `;
@@ -731,6 +738,7 @@
         .labelText("name")
         .labelLat("lat")
         .labelLng("lng")
+        .labelTypeFace(() => "Arial Black")
         .labelSize(0.95)
         .labelColor(() => "rgba(234, 246, 255, 0.92)")
         .labelResolution(2)
