@@ -436,6 +436,17 @@
       diamondNV: "$3.9B",
       nmr: "$2.1B"
     };
+    const qubitTypeDescriptions = {
+      photonic: "Photonic qubits encode quantum information in particles of light (photons), often using optical circuits and room-temperature-friendly components.",
+      topological: "Topological qubits store information in protected quantum states designed to be intrinsically more resistant to noise and decoherence.",
+      ionTrap: "Ion-trap qubits use charged atoms held in electromagnetic fields, controlled by lasers or microwaves with very high gate fidelity.",
+      semiconductor: "Semiconductor spin qubits use electron or nuclear spin in silicon-like devices, aiming to leverage mature chip manufacturing.",
+      superconducting: "Superconducting qubits are electrical circuits operating at cryogenic temperatures where resistance vanishes and quantum effects dominate.",
+      neutralAtom: "Neutral-atom qubits trap uncharged atoms in optical tweezers and use laser-driven interactions to perform quantum logic.",
+      quantumDot: "Quantum-dot qubits confine electrons in nanoscale semiconductor structures, using their spin or charge states as qubits.",
+      diamondNV: "Diamond NV-center qubits use nitrogen-vacancy defects in diamond, valued for quantum sensing and long-lived spin properties.",
+      nmr: "NMR qubits use nuclear spins manipulated by magnetic resonance techniques, historically important for foundational quantum control experiments."
+    };
     const countryInvestmentByType = {
       photonic: { USA: "$3.2B", CAN: "$1.4B", GBR: "$1.1B", JPN: "$0.8B", CHN: "$1.6B" },
       topological: { USA: "$1.7B", NLD: "$0.9B", DEU: "$0.8B", SWE: "$0.5B", GBR: "$0.7B" },
@@ -563,12 +574,14 @@
       const organizations = Array.from(new Set(rows.flatMap((r) => r.orgs))).sort((a, b) => a.localeCompare(b));
       const label = qubitConfig.find((q) => q.id === filterId)?.label || filterId;
       const investment = globalInvestmentByType[filterId] || "N/A";
+      const description = qubitTypeDescriptions[filterId] || "No description available.";
 
       const countryList = countries.map((name) => `<li>${name}</li>`).join("");
       const orgList = organizations.slice(0, 12).map((name) => `<li>${name}</li>`).join("");
 
       techFocusEl.innerHTML = `
         <p class="hint" style="margin:0 0 0.45rem;"><strong style="color:#e8f1f7;">${label}</strong></p>
+        <p class="hint" style="margin:0 0 0.45rem;"><strong style="color:#e8f1f7;">What it is:</strong> ${description}</p>
         <p class="hint" style="margin:0 0 0.45rem;"><strong style="color:#e8f1f7;">Global investment:</strong> ${investment}</p>
         <p class="hint" style="margin:0.3rem 0 0.15rem;">Countries involved (${countries.length})</p>
         <ul class="small-list country-list">${countryList || "<li>No entries</li>"}</ul>
