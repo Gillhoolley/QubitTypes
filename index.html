@@ -984,7 +984,6 @@
         .labelText("name")
         .labelLat("lat")
         .labelLng("lng")
-        .labelTypeFace(() => "Arial Black")
         .labelSize(0.95)
         .labelColor(() => "rgba(234, 246, 255, 0.92)")
         .labelResolution(2)
@@ -1051,8 +1050,11 @@
             refreshGlobeVisuals();
             scheduleAutoRotateResume();
           }
-        })
-        .onLabelClick((label) => {
+        });
+
+      // Bind label click only when available in the loaded globe.gl build.
+      if (typeof globe.onLabelClick === "function") {
+        globe.onLabelClick((label) => {
           if (interactionState.isDragging || Date.now() < interactionState.suppressClickUntil) return;
           try {
             const code = label?.code;
@@ -1065,6 +1067,7 @@
             scheduleAutoRotateResume();
           }
         });
+      }
 
       globe.width(globeEl.clientWidth);
       globe.height(globeEl.clientHeight);
