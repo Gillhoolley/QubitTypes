@@ -1,0 +1,593 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Global Qubit Innovation Map</title>
+  <style>
+    :root {
+      --bg-1: #041422;
+      --bg-2: #0b2233;
+      --panel: rgba(9, 28, 43, 0.88);
+      --text: #e8f1f7;
+      --muted: #9ab3c7;
+      --border: rgba(138, 167, 191, 0.25);
+      --photonic: #0b5d3a;
+      --topological: #123a7a;
+      --iontrap: #f4d03f;
+      --semiconductor: #7d3c98;
+      --superconducting: #e67e22;
+      --neutralatom: #5dade2;
+      --quantumdot: #d83c3c;
+      --diamondnv: #ff6fb5;
+      --nmr: #39ff14;
+      --active-default: #23c9a9;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background:
+        radial-gradient(circle at 15% 15%, rgba(53, 138, 203, 0.25), transparent 38%),
+        radial-gradient(circle at 80% 0%, rgba(62, 185, 155, 0.18), transparent 34%),
+        linear-gradient(140deg, var(--bg-1), var(--bg-2));
+      overflow: hidden;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      min-height: 100vh;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0.9rem 1.1rem;
+      border-bottom: 1px solid var(--border);
+      background: rgba(2, 14, 24, 0.8);
+      backdrop-filter: blur(8px);
+      z-index: 5;
+    }
+
+    .title-wrap h1 {
+      margin: 0;
+      font-size: clamp(1rem, 2vw, 1.25rem);
+      letter-spacing: 0.03em;
+    }
+
+    .title-wrap p {
+      margin: 0.15rem 0 0;
+      font-size: 0.84rem;
+      color: var(--muted);
+    }
+
+    .controls {
+      display: flex;
+      gap: 0.6rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    label {
+      font-size: 0.8rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+    }
+
+    select {
+      appearance: none;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text);
+      padding: 0.48rem 0.65rem;
+      border-radius: 0.5rem;
+      font-size: 0.88rem;
+      min-width: 13rem;
+    }
+
+    option { color: #0a1720; }
+
+    .content {
+      position: relative;
+      display: grid;
+      grid-template-columns: 1fr 330px;
+      min-height: 0;
+    }
+
+    #globeViz {
+      width: 100%;
+      height: calc(100vh - 68px);
+      min-height: 440px;
+    }
+
+    .side-panel {
+      border-left: 1px solid var(--border);
+      background: var(--panel);
+      backdrop-filter: blur(6px);
+      padding: 1rem;
+      overflow-y: auto;
+      height: calc(100vh - 68px);
+    }
+
+    .stat-block {
+      margin-bottom: 0.95rem;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 0.65rem;
+      padding: 0.75rem;
+    }
+
+    .stat-block h2 {
+      margin: 0 0 0.4rem;
+      font-size: 0.96rem;
+    }
+
+    .stat-block p {
+      margin: 0;
+      font-size: 0.84rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .legend {
+      display: grid;
+      gap: 0.45rem;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      font-size: 0.8rem;
+    }
+
+    .legend li {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      color: #d9e6ef;
+    }
+
+    .swatch {
+      width: 0.85rem;
+      height: 0.85rem;
+      border-radius: 0.2rem;
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.3) inset;
+      flex: 0 0 0.85rem;
+    }
+
+    #countryInfo {
+      margin-top: 1rem;
+      border-top: 1px solid var(--border);
+      padding-top: 0.85rem;
+    }
+
+    #countryInfo h3 {
+      margin: 0 0 0.45rem;
+      font-size: 0.95rem;
+    }
+
+    #countryInfo .hint {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.83rem;
+      line-height: 1.45;
+    }
+
+    .tag-wrap {
+      display: flex;
+      gap: 0.35rem;
+      flex-wrap: wrap;
+      margin: 0.4rem 0 0.6rem;
+    }
+
+    .tag {
+      font-size: 0.72rem;
+      border-radius: 999px;
+      padding: 0.2rem 0.5rem;
+      color: #041422;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .small-list {
+      margin: 0.3rem 0 0;
+      padding-left: 1rem;
+      font-size: 0.8rem;
+      color: #dce8f1;
+      line-height: 1.4;
+    }
+
+    .tooltip {
+      position: fixed;
+      pointer-events: none;
+      transform: translate(-50%, calc(-100% - 14px));
+      background: rgba(6, 22, 34, 0.95);
+      border: 1px solid var(--border);
+      border-radius: 0.55rem;
+      padding: 0.55rem 0.65rem;
+      width: min(320px, 90vw);
+      color: var(--text);
+      opacity: 0;
+      transition: opacity 120ms ease;
+      z-index: 30;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+      font-size: 0.78rem;
+    }
+
+    .tooltip h4 {
+      margin: 0;
+      font-size: 0.85rem;
+    }
+
+    .tooltip p {
+      margin: 0.28rem 0 0;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    @media (max-width: 980px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .side-panel {
+        height: auto;
+        border-left: 0;
+        border-top: 1px solid var(--border);
+      }
+
+      #globeViz {
+        height: 66vh;
+        min-height: 380px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <nav class="topbar">
+      <div class="title-wrap">
+        <h1>Global Qubit Innovation Atlas</h1>
+        <p>Interactive map of countries and organizations advancing qubit technologies</p>
+      </div>
+      <div class="controls">
+        <label for="qubitSelect">Qubit Type</label>
+        <select id="qubitSelect" aria-label="Filter by qubit technology"></select>
+      </div>
+    </nav>
+
+    <main class="content">
+      <div id="globeViz"></div>
+
+      <aside class="side-panel">
+        <section class="stat-block">
+          <h2>Global Snapshot</h2>
+          <p id="summaryText"></p>
+        </section>
+
+        <section class="stat-block">
+          <h2>Technology Colors</h2>
+          <ul class="legend" id="legend"></ul>
+        </section>
+
+        <section id="countryInfo">
+          <h3>Country Details</h3>
+          <p class="hint">Hover over an active country to see technologies, companies, institutions, and initiatives.</p>
+        </section>
+      </aside>
+
+      <div id="tooltip" class="tooltip" role="tooltip" aria-hidden="true"></div>
+    </main>
+  </div>
+
+  <script src="https://unpkg.com/three@0.161.0/build/three.min.js"></script>
+  <script src="https://unpkg.com/globe.gl@2.39.0/dist/globe.gl.min.js"></script>
+
+  <script>
+    const qubitConfig = [
+      { id: "all", label: "All Technologies", color: "var(--active-default)" },
+      { id: "photonic", label: "Photonic Qubits", color: "var(--photonic)" },
+      { id: "topological", label: "Topological Qubits", color: "var(--topological)" },
+      { id: "ionTrap", label: "Ion Trap Qubits", color: "var(--iontrap)" },
+      { id: "semiconductor", label: "Semiconductor Spin Qubits", color: "var(--semiconductor)" },
+      { id: "superconducting", label: "Superconducting Qubits", color: "var(--superconducting)" },
+      { id: "neutralAtom", label: "Neutral Atom Qubits", color: "var(--neutralatom)" },
+      { id: "quantumDot", label: "Quantum Dot Qubits", color: "var(--quantumdot)" },
+      { id: "diamondNV", label: "Diamond NV Center Qubits", color: "var(--diamondnv)" },
+      { id: "nmr", label: "NMR Qubits", color: "var(--nmr)" }
+    ];
+
+    const colorMap = Object.fromEntries(qubitConfig.map((q) => [q.id, q.color]));
+
+    const qubitData = {
+      photonic: [
+        { iso3: "USA", country: "United States", orgs: ["PsiQuantum", "Xanadu US", "NIST"], initiatives: ["DARPA Quantum Benchmarking", "DOE Quantum Networks"] },
+        { iso3: "CAN", country: "Canada", orgs: ["Xanadu", "University of Toronto", "NRC"], initiatives: ["National Quantum Strategy"] },
+        { iso3: "GBR", country: "United Kingdom", orgs: ["ORCA Computing", "University of Bristol", "National Quantum Computing Centre"], initiatives: ["UK National Quantum Technologies Programme"] },
+        { iso3: "JPN", country: "Japan", orgs: ["NTT", "University of Tokyo"], initiatives: ["Moonshot R&D Quantum Goals"] },
+        { iso3: "CHN", country: "China", orgs: ["USTC", "CAS Quantum Network Teams"], initiatives: ["National Quantum Communications Infrastructure"] }
+      ],
+      topological: [
+        { iso3: "USA", country: "United States", orgs: ["Microsoft Quantum", "Station Q", "University of California Santa Barbara"], initiatives: ["NSF Quantum Leap"] },
+        { iso3: "NLD", country: "Netherlands", orgs: ["QuTech", "TU Delft"], initiatives: ["Dutch National Growth Fund Quantum Delta NL"] },
+        { iso3: "DEU", country: "Germany", orgs: ["Forschungszentrum Julich", "Technical University of Munich"], initiatives: ["German Quantum Technologies Action Plan"] },
+        { iso3: "SWE", country: "Sweden", orgs: ["Chalmers University", "KTH"], initiatives: ["Wallenberg Centre for Quantum Technology"] },
+        { iso3: "GBR", country: "United Kingdom", orgs: ["University College London", "Oxford Materials teams"], initiatives: ["UKRI Quantum Missions"] }
+      ],
+      ionTrap: [
+        { iso3: "USA", country: "United States", orgs: ["IonQ", "Quantinuum US", "Duke Quantum Center"], initiatives: ["US National Quantum Initiative"] },
+        { iso3: "GBR", country: "United Kingdom", orgs: ["Quantinuum", "Oxford Ionics"], initiatives: ["Innovate UK Quantum Programs"] },
+        { iso3: "AUT", country: "Austria", orgs: ["University of Innsbruck", "AQT"], initiatives: ["Austrian Quantum Flagship"] },
+        { iso3: "CHE", country: "Switzerland", orgs: ["ETH Zurich", "University of Basel"], initiatives: ["Swiss Quantum Initiative"] },
+        { iso3: "FRA", country: "France", orgs: ["Pasqal Ion Programs", "CEA"], initiatives: ["France 2030 Quantum Plan"] }
+      ],
+      semiconductor: [
+        { iso3: "AUS", country: "Australia", orgs: ["Diraq", "UNSW Sydney"], initiatives: ["Australian National Quantum Strategy"] },
+        { iso3: "USA", country: "United States", orgs: ["Intel", "HRL Laboratories", "Sandia"], initiatives: ["DOE Quantum Testbeds"] },
+        { iso3: "NLD", country: "Netherlands", orgs: ["QuTech Spin Qubit Teams", "TNO"], initiatives: ["Quantum Delta NL"] },
+        { iso3: "JPN", country: "Japan", orgs: ["RIKEN", "Hitachi"], initiatives: ["Q-LEAP"] },
+        { iso3: "KOR", country: "South Korea", orgs: ["KAIST", "ETRI"], initiatives: ["K-Quantum Initiative"] }
+      ],
+      superconducting: [
+        { iso3: "USA", country: "United States", orgs: ["IBM", "Google Quantum AI", "Rigetti"], initiatives: ["NQI Programs", "DoE Quantum Centers"] },
+        { iso3: "CHN", country: "China", orgs: ["Origin Quantum", "USTC"], initiatives: ["National Quantum Computing Platform"] },
+        { iso3: "FIN", country: "Finland", orgs: ["IQM", "VTT"], initiatives: ["Finnish Quantum Flagship"] },
+        { iso3: "FRA", country: "France", orgs: ["Alice & Bob", "CEA-Leti"], initiatives: ["France 2030 Quantum"] },
+        { iso3: "JPN", country: "Japan", orgs: ["Fujitsu", "Riken"], initiatives: ["Moonshot Quantum"] }
+      ],
+      neutralAtom: [
+        { iso3: "FRA", country: "France", orgs: ["Pasqal", "Institut d'Optique"], initiatives: ["Plan Quantique"] },
+        { iso3: "USA", country: "United States", orgs: ["QuEra", "Harvard", "MIT"], initiatives: ["NSF Quantum Testbeds"] },
+        { iso3: "GBR", country: "United Kingdom", orgs: ["Infleqtion UK", "University of Birmingham"], initiatives: ["UK Quantum Missions"] },
+        { iso3: "DEU", country: "Germany", orgs: ["MPQ", "LMU Munich"], initiatives: ["German Quantum Ecosystem Grants"] },
+        { iso3: "ISR", country: "Israel", orgs: ["Weizmann Institute", "Hebrew University"], initiatives: ["Israel National Quantum Initiative"] }
+      ],
+      quantumDot: [
+        { iso3: "USA", country: "United States", orgs: ["NIST", "University of Wisconsin", "Sandia"], initiatives: ["NQI-Funded Quantum Dot Programs"] },
+        { iso3: "AUS", country: "Australia", orgs: ["UNSW", "Diraq"], initiatives: ["Australian Research Council Quantum Grants"] },
+        { iso3: "DEU", country: "Germany", orgs: ["Juelich", "Fraunhofer"], initiatives: ["BMBF Quantum Dot Projects"] },
+        { iso3: "JPN", country: "Japan", orgs: ["NTT", "Tohoku University"], initiatives: ["Q-LEAP"] },
+        { iso3: "SGP", country: "Singapore", orgs: ["NUS", "A*STAR"], initiatives: ["National Quantum-Safe Network Plus"] }
+      ],
+      diamondNV: [
+        { iso3: "USA", country: "United States", orgs: ["NVision", "Harvard", "MIT"], initiatives: ["DoD Quantum Sensing Programs"] },
+        { iso3: "DEU", country: "Germany", orgs: ["Ulm University", "Fraunhofer IOF"], initiatives: ["German Quantum Sensing Initiatives"] },
+        { iso3: "GBR", country: "United Kingdom", orgs: ["Element Six", "Oxford"], initiatives: ["UK Quantum Hubs"] },
+        { iso3: "AUS", country: "Australia", orgs: ["Quantum Brilliance", "ANU"], initiatives: ["Australia Quantum Commercialization Grants"] },
+        { iso3: "CHE", country: "Switzerland", orgs: ["ETH Zurich", "EPFL"], initiatives: ["Swiss Quantum Science and Engineering"] }
+      ],
+      nmr: [
+        { iso3: "USA", country: "United States", orgs: ["IBM Research", "MIT"], initiatives: ["NQI Academic Programs"] },
+        { iso3: "IND", country: "India", orgs: ["IISc", "TIFR"], initiatives: ["National Quantum Mission"] },
+        { iso3: "JPN", country: "Japan", orgs: ["Keio University", "Osaka University"], initiatives: ["Moonshot Quantum"] },
+        { iso3: "BRA", country: "Brazil", orgs: ["CBPF", "University of Sao Paulo"], initiatives: ["Brazilian National Quantum Initiative"] },
+        { iso3: "ESP", country: "Spain", orgs: ["ICFO", "CSIC"], initiatives: ["Quantum Spain"] }
+      ]
+    };
+
+    const countryProfiles = {};
+
+    Object.entries(qubitData).forEach(([typeId, rows]) => {
+      rows.forEach((row) => {
+        const existing = countryProfiles[row.iso3] || {
+          iso3: row.iso3,
+          country: row.country,
+          technologies: new Set(),
+          organizations: new Set(),
+          initiatives: new Set()
+        };
+
+        existing.technologies.add(typeId);
+        row.orgs.forEach((org) => existing.organizations.add(org));
+        row.initiatives.forEach((initiative) => existing.initiatives.add(initiative));
+        countryProfiles[row.iso3] = existing;
+      });
+    });
+
+    const selectEl = document.getElementById("qubitSelect");
+    const legendEl = document.getElementById("legend");
+    const summaryEl = document.getElementById("summaryText");
+    const countryInfoEl = document.getElementById("countryInfo");
+    const tooltipEl = document.getElementById("tooltip");
+
+    function cssVarColor(varToken) {
+      if (!varToken.startsWith("var(")) return varToken;
+      const varName = varToken.slice(4, -1).trim();
+      return getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+    }
+
+    function fillDropdown() {
+      qubitConfig.forEach((item) => {
+        const option = document.createElement("option");
+        option.value = item.id;
+        option.textContent = item.label;
+        selectEl.append(option);
+      });
+      selectEl.value = "all";
+    }
+
+    function buildLegend() {
+      legendEl.innerHTML = "";
+      qubitConfig.slice(1).forEach((q) => {
+        const li = document.createElement("li");
+        li.innerHTML = `<span class="swatch" style="background:${cssVarColor(q.color)}"></span>${q.label}`;
+        legendEl.append(li);
+      });
+    }
+
+    function getActiveCountryCodes(filterId) {
+      if (filterId === "all") return new Set(Object.keys(countryProfiles));
+      return new Set((qubitData[filterId] || []).map((r) => r.iso3));
+    }
+
+    function setSummary(filterId) {
+      const activeCodes = getActiveCountryCodes(filterId);
+      const companyCount = new Set();
+
+      activeCodes.forEach((code) => {
+        const profile = countryProfiles[code];
+        if (!profile) return;
+        profile.organizations.forEach((org) => companyCount.add(org));
+      });
+
+      const label = qubitConfig.find((q) => q.id === filterId).label;
+      summaryEl.textContent = `${label}: ${activeCodes.size} active countries and ${companyCount.size} organizations/institutions tracked in this view.`;
+    }
+
+    function updateCountryPanel(profile, filterId) {
+      if (!profile) {
+        countryInfoEl.innerHTML = `
+          <h3>Country Details</h3>
+          <p class="hint">Hover over an active country to see technologies, companies, institutions, and initiatives.</p>
+        `;
+        return;
+      }
+
+      const visibleTech = filterId === "all"
+        ? Array.from(profile.technologies)
+        : Array.from(profile.technologies).filter((t) => t === filterId);
+
+      const tagsHtml = visibleTech
+        .map((typeId) => {
+          const cfg = qubitConfig.find((q) => q.id === typeId);
+          return `<span class="tag" style="background:${cssVarColor(cfg.color)}">${cfg.label}</span>`;
+        })
+        .join("");
+
+      const orgList = Array.from(profile.organizations).slice(0, 8).map((org) => `<li>${org}</li>`).join("");
+      const initiativeList = Array.from(profile.initiatives).slice(0, 6).map((item) => `<li>${item}</li>`).join("");
+
+      countryInfoEl.innerHTML = `
+        <h3>${profile.country}</h3>
+        <div class="tag-wrap">${tagsHtml || "<span class='hint'>No data for selected filter</span>"}</div>
+        <p class="hint">Organizations and institutions</p>
+        <ul class="small-list">${orgList || "<li>No entries</li>"}</ul>
+        <p class="hint" style="margin-top:0.5rem;">Government initiatives</p>
+        <ul class="small-list">${initiativeList || "<li>No entries</li>"}</ul>
+      `;
+    }
+
+    function tooltipHtml(profile, filterId) {
+      if (!profile) return "";
+      const visibleTech = filterId === "all"
+        ? Array.from(profile.technologies)
+        : Array.from(profile.technologies).filter((t) => t === filterId);
+
+      const techNames = visibleTech
+        .map((id) => qubitConfig.find((q) => q.id === id).label)
+        .join(" | ");
+
+      return `
+        <h4>${profile.country}</h4>
+        <p><strong>Technologies:</strong> ${techNames || "No matching technology"}</p>
+        <p><strong>Organizations:</strong> ${Array.from(profile.organizations).slice(0, 4).join(", ")}</p>
+      `;
+    }
+
+    function showTooltip(x, y, html) {
+      tooltipEl.innerHTML = html;
+      tooltipEl.style.left = `${x}px`;
+      tooltipEl.style.top = `${y}px`;
+      tooltipEl.style.opacity = "1";
+      tooltipEl.setAttribute("aria-hidden", "false");
+    }
+
+    function hideTooltip() {
+      tooltipEl.style.opacity = "0";
+      tooltipEl.setAttribute("aria-hidden", "true");
+    }
+
+    async function init() {
+      fillDropdown();
+      buildLegend();
+
+      const globeEl = document.getElementById("globeViz");
+      const worldResp = await fetch("https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json");
+      const worldGeo = await worldResp.json();
+      const countries = worldGeo.features;
+
+      let selectedFilter = "all";
+      const activeCodes = () => getActiveCountryCodes(selectedFilter);
+
+      const globe = Globe()(globeEl)
+        .globeImageUrl("https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg")
+        .bumpImageUrl("https://unpkg.com/three-globe/example/img/earth-topology.png")
+        .backgroundImageUrl("https://unpkg.com/three-globe/example/img/night-sky.png")
+        .showAtmosphere(true)
+        .atmosphereColor("#7fc8ff")
+        .atmosphereAltitude(0.2)
+        .polygonCapColor((feature) => {
+          const code = feature.properties.ISO_A3 || feature.id;
+          if (!activeCodes().has(code)) return "rgba(115,130,143,0.12)";
+          const useColor = selectedFilter === "all"
+            ? cssVarColor(colorMap.all)
+            : cssVarColor(colorMap[selectedFilter]);
+          return `${useColor}cc`;
+        })
+        .polygonSideColor(() => "rgba(0, 50, 88, 0.15)")
+        .polygonStrokeColor((feature) => {
+          const code = feature.properties.ISO_A3 || feature.id;
+          return activeCodes().has(code) ? "rgba(230, 244, 255, 0.55)" : "rgba(107, 131, 152, 0.22)";
+        })
+        .polygonAltitude((feature) => {
+          const code = feature.properties.ISO_A3 || feature.id;
+          return activeCodes().has(code) ? 0.018 : 0.005;
+        })
+        .polygonsData(countries)
+        .onPolygonHover((feature, prevFeature, evt) => {
+          if (!feature) {
+            hideTooltip();
+            updateCountryPanel(null, selectedFilter);
+            return;
+          }
+
+          const code = feature.properties.ISO_A3 || feature.id;
+          const profile = countryProfiles[code];
+
+          if (!profile || !activeCodes().has(code)) {
+            hideTooltip();
+            updateCountryPanel(null, selectedFilter);
+            return;
+          }
+
+          updateCountryPanel(profile, selectedFilter);
+          showTooltip(evt.clientX, evt.clientY, tooltipHtml(profile, selectedFilter));
+        });
+
+      globe.controls().autoRotate = true;
+      globe.controls().autoRotateSpeed = 0.55;
+      globe.controls().enablePan = false;
+
+      selectEl.addEventListener("change", (event) => {
+        selectedFilter = event.target.value;
+        setSummary(selectedFilter);
+        hideTooltip();
+        updateCountryPanel(null, selectedFilter);
+        globe
+          .polygonCapColor(globe.polygonCapColor())
+          .polygonAltitude(globe.polygonAltitude())
+          .polygonStrokeColor(globe.polygonStrokeColor());
+      });
+
+      setSummary(selectedFilter);
+      updateCountryPanel(null, selectedFilter);
+
+      window.addEventListener("resize", () => {
+        globe.width(globeEl.clientWidth);
+        globe.height(globeEl.clientHeight);
+      });
+    }
+
+    init().catch((error) => {
+      const el = document.getElementById("globeViz");
+      el.innerHTML = `<div style="padding:1rem;color:#ffb3b3;">Failed to load globe data. ${error.message}</div>`;
+    });
+  </script>
+</body>
+</html>
