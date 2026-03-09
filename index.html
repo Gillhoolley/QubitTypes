@@ -819,6 +819,18 @@
           })
           .filter(Boolean);
       };
+      const getSelectedPointData = () => {
+        if (!pinnedCountryCode) return [];
+        const feature = featuresByCode.get(pinnedCountryCode);
+        const profile = countryProfiles[pinnedCountryCode];
+        if (!feature || !profile) return [];
+        const center = getFeatureCenter(feature);
+        return [{
+          lat: center.lat,
+          lng: center.lng,
+          name: profile.country
+        }];
+      };
 
       const globe = Globe()(globeEl)
         .globeImageUrl("https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg")
@@ -830,6 +842,7 @@
         .polygonCapColor((feature) => {
           const code = countryCode(feature);
           if (!activeCodes().has(code)) return "rgba(115,130,143,0.12)";
+          if (pinnedCountryCode && code === pinnedCountryCode) return "rgba(255, 235, 130, 0.95)";
           const useColor = selectedFilter === "all"
             ? cssVarColor(colorMap.all)
             : cssVarColor(colorMap[selectedFilter]);
@@ -838,10 +851,12 @@
         .polygonSideColor(() => "rgba(0, 50, 88, 0.15)")
         .polygonStrokeColor((feature) => {
           const code = countryCode(feature);
+          if (pinnedCountryCode && code === pinnedCountryCode) return "rgba(255, 255, 255, 1)";
           return activeCodes().has(code) ? "rgba(230, 244, 255, 0.55)" : "rgba(107, 131, 152, 0.22)";
         })
         .polygonAltitude((feature) => {
           const code = countryCode(feature);
+          if (pinnedCountryCode && code === pinnedCountryCode) return 0.032;
           return activeCodes().has(code) ? 0.018 : 0.005;
         })
         .labelsData(getLabelData())
@@ -854,6 +869,12 @@
         .labelResolution(2)
         .labelDotRadius(0.11)
         .labelAltitude(0.025)
+        .pointsData(getSelectedPointData())
+        .pointLat("lat")
+        .pointLng("lng")
+        .pointColor(() => "rgba(255, 245, 170, 0.95)")
+        .pointAltitude(0.04)
+        .pointRadius(0.55)
         .polygonsData(countries)
         .onPolygonHover((feature, prevFeature, evt) => {
           if (!feature) {
@@ -882,6 +903,7 @@
               updateCardVisibility(selectedFilter, countryProfiles.USA || null, false);
               repositionTechnologyColorsCard(selectedFilter);
               countrySelectEl.value = "USA";
+              globe.pointsData(getSelectedPointData());
               hideTooltip();
               return;
             }
@@ -892,6 +914,7 @@
             updateCardVisibility(selectedFilter, countryProfiles[code], true);
             repositionTechnologyColorsCard(selectedFilter);
             countrySelectEl.value = code;
+            globe.pointsData(getSelectedPointData());
             if (ENABLE_CENTER_ON_SELECT) {
               const center = getFeatureCenter(feature);
               globe.pointOfView({ lat: center.lat, lng: center.lng, altitude: 1.5 }, 900);
@@ -908,6 +931,7 @@
             updateCountryTechSnapshotCard(selectedFilter, countryProfiles.USA || null);
             updateCardVisibility(selectedFilter, countryProfiles.USA || null, false);
             repositionTechnologyColorsCard(selectedFilter);
+            globe.pointsData(getSelectedPointData());
             hideTooltip();
             scheduleAutoRotate();
           }
@@ -925,6 +949,7 @@
             updateCountryTechSnapshotCard(selectedFilter, profile);
             updateCardVisibility(selectedFilter, profile, true);
             repositionTechnologyColorsCard(selectedFilter);
+            globe.pointsData(getSelectedPointData());
             if (ENABLE_CENTER_ON_SELECT) {
               const center = getFeatureCenter(feature);
               globe.pointOfView({ lat: center.lat, lng: center.lng, altitude: 1.5 }, 900);
@@ -976,6 +1001,7 @@
         updateCountryTechSnapshotCard(selectedFilter, countryProfiles.USA || null);
         updateCardVisibility(selectedFilter, countryProfiles.USA || null, false);
         repositionTechnologyColorsCard(selectedFilter);
+        globe.pointsData(getSelectedPointData());
       });
 
       selectEl.addEventListener("change", (event) => {
@@ -1000,7 +1026,8 @@
           .polygonCapColor(globe.polygonCapColor())
           .polygonAltitude(globe.polygonAltitude())
           .polygonStrokeColor(globe.polygonStrokeColor())
-          .labelsData(getLabelData());
+          .labelsData(getLabelData())
+          .pointsData(getSelectedPointData());
       });
 
       countrySelectEl.addEventListener("change", (event) => {
@@ -1012,6 +1039,7 @@
         updateCountryTechSnapshotCard(selectedFilter, profile);
         updateCardVisibility(selectedFilter, profile, true);
         repositionTechnologyColorsCard(selectedFilter);
+        globe.pointsData(getSelectedPointData());
         hideTooltip();
 
         const feature = featuresByCode.get(code);
@@ -1034,6 +1062,7 @@
       updateCountryTechSnapshotCard(selectedFilter, countryProfiles.USA || null);
       updateCardVisibility(selectedFilter, countryProfiles.USA || null, false);
       repositionTechnologyColorsCard(selectedFilter);
+      globe.pointsData(getSelectedPointData());
 
       window.addEventListener("resize", () => {
         globe.width(globeEl.clientWidth);
