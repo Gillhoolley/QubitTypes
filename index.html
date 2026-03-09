@@ -250,26 +250,6 @@
       line-height: 1.4;
     }
 
-    .debug-overlay {
-      position: fixed;
-      right: 12px;
-      bottom: 12px;
-      z-index: 50;
-      min-width: 230px;
-      border: 1px solid var(--border);
-      border-radius: 0.55rem;
-      background: rgba(5, 18, 29, 0.9);
-      padding: 0.5rem 0.6rem;
-      font-size: 0.74rem;
-      color: #d9eaf6;
-      backdrop-filter: blur(6px);
-    }
-
-    .debug-overlay code {
-      color: #b6defa;
-      font-size: 0.72rem;
-    }
-
     @media (max-width: 980px) {
       body {
         overflow: auto;
@@ -357,7 +337,6 @@
       </aside>
 
       <div id="tooltip" class="tooltip" role="tooltip" aria-hidden="true"></div>
-      <div id="debugOverlay" class="debug-overlay" aria-live="polite"></div>
     </main>
   </div>
 
@@ -378,7 +357,6 @@
       { id: "nmr", label: "NMR Qubits", color: "var(--nmr)" }
     ];
     const ENABLE_CENTER_ON_SELECT = false;
-    const ENABLE_INTERACTION_DEBUG = true;
 
     const colorMap = Object.fromEntries(qubitConfig.map((q) => [q.id, q.color]));
 
@@ -511,7 +489,6 @@
     const countryTechSnapshotEl = document.getElementById("countryTechSnapshotContent");
     const countryInfoEl = document.getElementById("countryInfo");
     const tooltipEl = document.getElementById("tooltip");
-    const debugOverlayEl = document.getElementById("debugOverlay");
 
     function cssVarColor(varToken) {
       if (!varToken.startsWith("var(")) return varToken;
@@ -903,32 +880,10 @@
       let controls;
       let globe;
 
-      function renderDebugOverlay() {
-        if (!ENABLE_INTERACTION_DEBUG) {
-          debugOverlayEl.style.display = "none";
-          return;
-        }
-        const selectedCountryName = pinnedCountryCode && countryProfiles[pinnedCountryCode]
-          ? countryProfiles[pinnedCountryCode].country
-          : "None";
-        const autoRotate = controls ? controls.autoRotate : false;
-        debugOverlayEl.style.display = "block";
-        debugOverlayEl.innerHTML = `
-          <div><strong>Interaction Debug</strong></div>
-          <div>Mode: <code>${interactionState.mode}</code></div>
-          <div>Dragging: <code>${interactionState.isDragging}</code></div>
-          <div>PointerDown: <code>${interactionState.pointerDown}</code></div>
-          <div>AutoRotate: <code>${autoRotate}</code></div>
-          <div>Selected: <code>${selectedCountryName}</code></div>
-          <div>Filter: <code>${selectedFilter}</code></div>
-        `;
-      }
-
       function pauseAutoRotate(reason) {
         if (interactionState.resumeTimer) clearTimeout(interactionState.resumeTimer);
         if (controls) controls.autoRotate = false;
         interactionState.mode = reason;
-        renderDebugOverlay();
       }
 
       function scheduleAutoRotateResume(delayMs = AUTO_ROTATE_RESUME_DELAY_MS) {
@@ -937,7 +892,6 @@
           if (interactionState.isDragging) return;
           if (controls) controls.autoRotate = true;
           interactionState.mode = pinnedCountryCode ? "selected" : "auto-rotating";
-          renderDebugOverlay();
         }, delayMs);
       }
 
@@ -958,7 +912,6 @@
           if (!interactionState.latestTooltip) return;
           const t = interactionState.latestTooltip;
           showTooltip(t.x, t.y, t.html);
-          renderDebugOverlay();
         });
       }
 
@@ -967,7 +920,6 @@
         interactionState.hoverClearTimer = setTimeout(() => {
           hideTooltip();
           if (!interactionState.isDragging) scheduleAutoRotateResume();
-          renderDebugOverlay();
         }, 110);
       }
 
@@ -975,7 +927,6 @@
         if (interactionState.hoverClearTimer) clearTimeout(interactionState.hoverClearTimer);
         interactionState.hoverClearTimer = null;
         hideTooltip();
-        renderDebugOverlay();
       }
 
       function selectCountry(code, featureForCenter = null) {
@@ -991,7 +942,6 @@
         repositionTechnologyColorsCard(selectedFilter);
         clearHoverNow();
         refreshGlobeVisuals();
-        renderDebugOverlay();
 
         if (ENABLE_CENTER_ON_SELECT) {
           const sourceFeature = featureForCenter || featuresByCode.get(code);
@@ -1135,7 +1085,6 @@
         interactionState.downX = event.clientX;
         interactionState.downY = event.clientY;
         pauseAutoRotate("idle");
-        renderDebugOverlay();
       });
 
       globeEl.addEventListener("pointermove", (event) => {
@@ -1148,7 +1097,6 @@
           interactionState.isDragging = true;
           interactionState.mode = "dragging";
           clearHoverNow();
-          renderDebugOverlay();
         }
       });
 
@@ -1159,14 +1107,12 @@
         interactionState.pointerDown = false;
         interactionState.isDragging = false;
         scheduleAutoRotateResume();
-        renderDebugOverlay();
       });
 
       globeEl.addEventListener("pointercancel", () => {
         interactionState.pointerDown = false;
         interactionState.isDragging = false;
         scheduleAutoRotateResume();
-        renderDebugOverlay();
       });
 
       globeEl.addEventListener("mouseleave", () => {
@@ -1220,7 +1166,6 @@
       updateCardVisibility(selectedFilter, countryProfiles.USA || null, false);
       repositionTechnologyColorsCard(selectedFilter);
       refreshGlobeVisuals();
-      renderDebugOverlay();
 
       window.addEventListener("resize", () => {
         globe.width(globeEl.clientWidth);
