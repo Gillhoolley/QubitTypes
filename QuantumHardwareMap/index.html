@@ -1,0 +1,1997 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quantum Hardware Map</title>
+  <style>
+    :root {
+      --bg-1: #041a24;
+      --bg-2: #0a3142;
+      --panel: rgba(9, 27, 36, 0.8);
+      --panel-border: rgba(151, 213, 236, 0.25);
+      --text: #ebf6fb;
+      --muted: #a4c7d7;
+      --accent: #5ce1e6;
+      --warn: #ffd166;
+      --type-ion: #5ce1e6;
+      --type-super: #f78c6b;
+      --type-photonic: #c3f584;
+      --type-neutral: #f8a4d8;
+      --type-annealing: #a2b6ff;
+      --type-silicon: #9de39a;
+      --type-topological: #ffd28f;
+      --type-diamond: #8ee7ff;
+      --type-nmr: #ff9ea6;
+      --marker: #ffd166;
+      --shadow: rgba(0, 0, 0, 0.35);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      height: 100%;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 20% 20%, #0b4054 0%, transparent 35%),
+        radial-gradient(circle at 80% 75%, #0b5265 0%, transparent 40%),
+        linear-gradient(145deg, var(--bg-1), var(--bg-2));
+    }
+
+    .page {
+      min-height: 100%;
+      display: grid;
+      grid-template-columns: minmax(280px, 340px) 1fr;
+      gap: 18px;
+      padding: 18px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 14px;
+      padding: 14px;
+      backdrop-filter: blur(5px);
+      box-shadow: 0 10px 30px var(--shadow);
+    }
+
+    h1 {
+      margin: 0 0 4px;
+      font-size: 1.2rem;
+      letter-spacing: 0.3px;
+    }
+
+    .subtitle {
+      margin: 0 0 14px;
+      color: var(--muted);
+      font-size: 0.93rem;
+      line-height: 1.35;
+    }
+
+    .control-group {
+      margin-bottom: 14px;
+    }
+
+    .control-title {
+      font-size: 0.88rem;
+      color: var(--muted);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .chip-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .chip {
+      border: 1px solid var(--panel-border);
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 10px;
+      padding: 8px 9px;
+      font-size: 0.84rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .chip input {
+      margin: 0;
+      accent-color: var(--accent);
+    }
+
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      flex: 0 0 9px;
+    }
+
+    .timeline-wrap {
+      display: grid;
+      gap: 7px;
+    }
+
+    .timeline-info {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.84rem;
+      color: var(--muted);
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+    }
+
+    .legend {
+      margin-top: 10px;
+      border-top: 1px solid var(--panel-border);
+      padding-top: 12px;
+      font-size: 0.83rem;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .legend-key {
+      margin-top: 8px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px 10px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .legend-swatch {
+      width: 16px;
+      height: 0;
+      border-top: 2px solid;
+      flex: 0 0 16px;
+    }
+
+    .legend-label {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .search-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+    }
+
+    .text-input {
+      width: 100%;
+      border: 1px solid var(--panel-border);
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 0.84rem;
+      outline: none;
+    }
+
+    .text-input:focus {
+      border-color: rgba(92, 225, 230, 0.8);
+      box-shadow: 0 0 0 2px rgba(92, 225, 230, 0.18);
+    }
+
+    .tiny-btn {
+      border: 1px solid var(--panel-border);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 0.82rem;
+      cursor: pointer;
+    }
+
+    .tiny-btn.active {
+      border-color: rgba(92, 225, 230, 0.8);
+      background: rgba(92, 225, 230, 0.16);
+    }
+
+    .btn-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .source-panel {
+      margin-top: 10px;
+      border-top: 1px solid var(--panel-border);
+      padding-top: 10px;
+      font-size: 0.8rem;
+      color: var(--muted);
+      line-height: 1.4;
+      display: grid;
+      gap: 4px;
+    }
+
+    .source-panel a {
+      color: var(--accent);
+      text-decoration: none;
+      word-break: break-word;
+    }
+
+    .globe-wrap {
+      position: relative;
+      min-height: 520px;
+      border-radius: 16px;
+      overflow: hidden;
+      background: rgba(6, 24, 31, 0.45);
+      border: 1px solid rgba(133, 196, 222, 0.24);
+      box-shadow: 0 10px 30px var(--shadow);
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      cursor: grab;
+      touch-action: none;
+    }
+
+    canvas.dragging {
+      cursor: grabbing;
+    }
+
+    .tooltip {
+      position: absolute;
+      pointer-events: none;
+      min-width: 190px;
+      max-width: 260px;
+      background: rgba(6, 18, 24, 0.92);
+      color: var(--text);
+      border: 1px solid rgba(145, 216, 235, 0.35);
+      border-radius: 10px;
+      padding: 9px 10px;
+      font-size: 0.82rem;
+      line-height: 1.4;
+      box-shadow: 0 8px 24px var(--shadow);
+      opacity: 0;
+      transform: translate(-50%, -115%);
+      transition: opacity 120ms linear;
+      z-index: 2;
+    }
+
+    .tooltip strong {
+      color: var(--warn);
+      display: block;
+      margin-bottom: 2px;
+      font-size: 0.88rem;
+    }
+
+    .kpi {
+      margin-top: 10px;
+      font-size: 0.82rem;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    @media (max-width: 980px) {
+      .page {
+        grid-template-columns: 1fr;
+      }
+
+      .globe-wrap {
+        min-height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="panel">
+      <h1>The Quantum Hardware Map</h1>
+      <p class="subtitle">Where quantum computers live: rotate the globe, hover markers, and filter by hardware, scale, and year.</p>
+
+      <div class="control-group">
+        <div class="control-title">Hardware Type</div>
+        <div class="chip-grid" id="hardware-filters"></div>
+      </div>
+
+      <div class="control-group">
+        <div class="control-title">Qubit Scale</div>
+        <div class="chip-grid" id="qubit-filters"></div>
+      </div>
+
+      <div class="control-group">
+        <div class="control-title">Additional Layers</div>
+        <div class="chip-grid" id="ecosystem-filters"></div>
+      </div>
+
+      <div class="control-group">
+        <div class="control-title">View Mode</div>
+        <div class="chip-grid" id="viewmode-filters"></div>
+      </div>
+
+      <div class="control-group">
+        <div class="control-title">Search</div>
+        <div class="search-row">
+          <input id="search-input" class="text-input" type="text" placeholder="Company or country..." />
+          <button id="search-clear" class="tiny-btn" type="button">Clear</button>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <div class="control-title">Timeline</div>
+        <div class="timeline-wrap">
+          <div class="timeline-info">
+            <span>Visible Through Year</span>
+            <strong id="year-label">2030</strong>
+          </div>
+          <input id="year-slider" type="range" min="2018" max="2030" step="1" value="2030" />
+          <button id="timeline-play" class="tiny-btn" type="button">Play Timeline</button>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <div class="control-title">Region Focus</div>
+        <div class="btn-grid" id="region-focus"></div>
+      </div>
+
+      <div class="kpi">
+        <span id="visible-count">0 sites visible</span>
+        <span id="active-types">0 hardware types active</span>
+      </div>
+
+      <div class="legend">
+        Drag to spin manually. Auto-rotation resumes when idle. Marker size scales with qubit count for quick comparison.
+        <div class="legend-key" aria-label="Boundary legend">
+          <div class="legend-item">
+            <span class="legend-swatch" style="border-color: rgba(181, 123, 255, 0.78)"></span>
+            <span class="legend-label">US states</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-swatch" style="border-color: rgba(132, 228, 188, 0.62)"></span>
+            <span class="legend-label">Europe countries</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-swatch" style="border-color: rgba(122, 205, 255, 0.72)"></span>
+            <span class="legend-label">Canada provinces</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-swatch" style="border-color: rgba(166, 213, 255, 0.58)"></span>
+            <span class="legend-label">Africa countries</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-swatch" style="border-color: rgba(255, 94, 94, 0.78)"></span>
+            <span class="legend-label">Middle East countries</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-swatch" style="border-color: rgba(255, 234, 164, 0.84)"></span>
+            <span class="legend-label">Highlighted countries</span>
+          </div>
+        </div>
+        <div id="map-status">Loading boundary overlays for US states and Europe...</div>
+      </div>
+
+      <div class="source-panel" id="source-panel">
+        <strong>Data Source</strong>
+        <div id="source-company">Hover a marker to view source metadata.</div>
+        <div id="source-verified"></div>
+        <a id="source-link" href="" target="_blank" rel="noopener"></a>
+      </div>
+    </section>
+
+    <section class="globe-wrap" id="globe-wrap">
+      <canvas id="globe-canvas" aria-label="Rotating globe with quantum hardware markers"></canvas>
+      <div class="tooltip" id="tooltip"></div>
+    </section>
+  </main>
+
+  <script>
+    const hardwareColors = {
+      "ion trap": getCssVar("--type-ion"),
+      "superconducting": getCssVar("--type-super"),
+      "photonic": getCssVar("--type-photonic"),
+      "neutral atom": getCssVar("--type-neutral"),
+      "annealing": getCssVar("--type-annealing"),
+      "silicon spin": getCssVar("--type-silicon"),
+      "topological": getCssVar("--type-topological"),
+      "diamond NV": getCssVar("--type-diamond"),
+      "NMR": getCssVar("--type-nmr")
+    };
+
+    const quantumSites = [
+      {
+        company: "IBM Quantum",
+        lab: "IBM Thomas J. Watson Research Center",
+        city: "Yorktown Heights, New York, USA",
+        lat: 41.2094,
+        lon: -73.7271,
+        type: "superconducting",
+        qubits: 1121,
+        year: 2023
+      },
+      {
+        company: "IonQ",
+        lab: "IonQ Data Center",
+        city: "College Park, Maryland, USA",
+        lat: 38.9897,
+        lon: -76.9378,
+        type: "ion trap",
+        qubits: 36,
+        year: 2020
+      },
+      {
+        company: "Xanadu",
+        lab: "Xanadu Quantum Lab",
+        city: "Toronto, Ontario, Canada",
+        lat: 43.6532,
+        lon: -79.3832,
+        type: "photonic",
+        qubits: 216,
+        year: 2022
+      },
+      {
+        company: "D-Wave",
+        lab: "D-Wave Corporate HQ / QPU Engineering",
+        city: "Burnaby, British Columbia, Canada",
+        lat: 49.2542,
+        lon: -123.0089,
+        type: "annealing",
+        qubits: 5000,
+        year: 2023
+      },
+      {
+        company: "Anyon Systems",
+        lab: "Calcul Quebec Deployment",
+        city: "Montreal, Quebec, Canada",
+        lat: 45.5019,
+        lon: -73.5674,
+        type: "superconducting",
+        qubits: 24,
+        year: 2024
+      },
+      {
+        company: "QuEra",
+        lab: "QuEra Headquarters",
+        city: "Boston, Massachusetts, USA",
+        lat: 42.3601,
+        lon: -71.0589,
+        type: "neutral atom",
+        qubits: 256,
+        year: 2023
+      },
+      {
+        company: "PsiQuantum",
+        lab: "Silicon Photonics Program",
+        city: "Palo Alto, California, USA",
+        lat: 37.4419,
+        lon: -122.143,
+        type: "photonic",
+        qubits: 300,
+        year: 2025
+      },
+      {
+        company: "Quantinuum",
+        lab: "Boulder Lab",
+        city: "Boulder, Colorado, USA",
+        lat: 40.01499,
+        lon: -105.2705,
+        type: "ion trap",
+        qubits: 56,
+        year: 2022
+      },
+      {
+        company: "Quantinuum",
+        lab: "Cambridge Operations",
+        city: "Cambridge, UK",
+        lat: 52.2053,
+        lon: 0.1218,
+        type: "ion trap",
+        qubits: 56,
+        year: 2023
+      },
+      {
+        company: "PASQAL",
+        lab: "Quantum Processing Center",
+        city: "Massy, France",
+        lat: 48.7262,
+        lon: 2.283,
+        type: "neutral atom",
+        qubits: 100,
+        year: 2022
+      },
+      {
+        company: "Fujitsu + RIKEN",
+        lab: "RQC-FUJITSU Collaboration Center",
+        city: "Wako, Japan",
+        lat: 35.7894,
+        lon: 139.6233,
+        type: "superconducting",
+        qubits: 64,
+        year: 2023
+      },
+      {
+        company: "IQM",
+        lab: "IQM Quantum Computers",
+        city: "Munich, Germany",
+        lat: 48.1351,
+        lon: 11.582,
+        type: "superconducting",
+        qubits: 54,
+        year: 2024
+      },
+      {
+        company: "USTC",
+        lab: "Hefei National Quantum Lab",
+        city: "Hefei, China",
+        lat: 31.8206,
+        lon: 117.2272,
+        type: "superconducting",
+        qubits: 176,
+        year: 2023
+      },
+      {
+        company: "PsiQuantum",
+        lab: "Fault-Tolerant Program Site",
+        city: "Brisbane, Australia",
+        lat: -27.4698,
+        lon: 153.0251,
+        type: "photonic",
+        qubits: 432,
+        year: 2026
+      },
+      {
+        company: "Aramco + PASQAL",
+        lab: "Saudi Quantum Deployment Site",
+        city: "Dhahran, Saudi Arabia",
+        lat: 26.2361,
+        lon: 50.0393,
+        type: "neutral atom",
+        qubits: 200,
+        year: 2025
+      },
+      {
+        company: "TII Quantum Research Center",
+        lab: "Applied Quantum Lab",
+        city: "Abu Dhabi, UAE",
+        lat: 24.4539,
+        lon: 54.3773,
+        type: "superconducting",
+        qubits: 54,
+        year: 2024
+      },
+      {
+        company: "IQCC + Quantum Machines",
+        lab: "Israeli Quantum Computing Center",
+        city: "Tel Aviv, Israel",
+        lat: 32.0853,
+        lon: 34.7818,
+        type: "superconducting",
+        qubits: 20,
+        year: 2024
+      },
+      {
+        company: "QC2 + Quantinuum",
+        lab: "Qatar Quantum Innovation Node",
+        city: "Doha, Qatar",
+        lat: 25.2854,
+        lon: 51.531,
+        type: "ion trap",
+        qubits: 56,
+        year: 2025
+      },
+      {
+        company: "CHPC South Africa",
+        lab: "National Quantum Access Program",
+        city: "Cape Town, South Africa",
+        lat: -33.9249,
+        lon: 18.4241,
+        type: "ion trap",
+        qubits: 32,
+        year: 2025
+      },
+      {
+        company: "Diraq",
+        lab: "Commercial Silicon Quantum Lab",
+        city: "Sydney, New South Wales, Australia",
+        lat: -33.8688,
+        lon: 151.2093,
+        type: "silicon spin",
+        qubits: 8,
+        year: 2024
+      },
+      {
+        company: "Quantum Motion",
+        lab: "NQCC Silicon CMOS System",
+        city: "Harwell, UK",
+        lat: 51.5738,
+        lon: -1.3146,
+        type: "silicon spin",
+        qubits: 4,
+        year: 2025
+      },
+      {
+        company: "Microsoft Quantum",
+        lab: "Topological Qubit Lab",
+        city: "Lyngby, Denmark",
+        lat: 55.7704,
+        lon: 12.5038,
+        type: "topological",
+        qubits: 1,
+        year: 2025
+      },
+      {
+        company: "Quantum Brilliance",
+        lab: "NV-Center Quantum Program",
+        city: "Stuttgart, Germany",
+        lat: 48.7758,
+        lon: 9.1829,
+        type: "diamond NV",
+        qubits: 27,
+        year: 2024
+      },
+      {
+        company: "SpinQ",
+        lab: "NMR Quantum Systems HQ",
+        city: "Shenzhen, China",
+        lat: 22.5431,
+        lon: 114.0579,
+        type: "NMR",
+        qubits: 3,
+        year: 2023
+      }
+    ];
+
+    const qubitBands = [
+      { id: "small", label: "< 100", min: 0, max: 99 },
+      { id: "mid", label: "100 - 499", min: 100, max: 499 },
+      { id: "large", label: "500+", min: 500, max: Infinity }
+    ];
+
+    const countryAnchors = {
+      "United States": { lat: 39.8283, lon: -98.5795 },
+      "Canada": { lat: 56.1304, lon: -106.3468 },
+      "United Kingdom": { lat: 55.3781, lon: -3.436 },
+      "France": { lat: 46.2276, lon: 2.2137 },
+      "Germany": { lat: 51.1657, lon: 10.4515 },
+      "Denmark": { lat: 56.2639, lon: 9.5018 },
+      "Japan": { lat: 36.2048, lon: 138.2529 },
+      "China": { lat: 35.8617, lon: 104.1954 },
+      "Australia": { lat: -25.2744, lon: 133.7751 },
+      "Saudi Arabia": { lat: 23.8859, lon: 45.0792 },
+      "United Arab Emirates": { lat: 23.4241, lon: 53.8478 },
+      "Israel": { lat: 31.0461, lon: 34.8516 },
+      "Qatar": { lat: 25.3548, lon: 51.1839 },
+      "South Africa": { lat: -30.5595, lon: 22.9375 },
+      "Senegal": { lat: 14.4974, lon: -14.4524 },
+      "Kenya": { lat: -0.0236, lon: 37.9062 },
+      "Zimbabwe": { lat: -19.0154, lon: 29.1549 },
+      "Tunisia": { lat: 33.8869, lon: 9.5375 },
+      "Egypt": { lat: 26.8206, lon: 30.8025 },
+      "Rwanda": { lat: -1.9403, lon: 29.8739 },
+      "Ethiopia": { lat: 9.145, lon: 40.4897 },
+      "Ghana": { lat: 7.9465, lon: -1.0232 },
+      "Nigeria": { lat: 9.082, lon: 8.6753 },
+      "Uganda": { lat: 1.3733, lon: 32.2903 },
+      "Tanzania": { lat: -6.369, lon: 34.8888 }
+    };
+
+    const ecosystemNodes = [
+      {
+        company: "UCAD + OQI",
+        lab: "National Quantum Computing School",
+        city: "Dakar, Senegal",
+        lat: 14.7167,
+        lon: -17.4677,
+        year: 2025,
+        focus: "education and workforce"
+      },
+      {
+        company: "Africa Quantum Summit",
+        lab: "Regional Ecosystem Node",
+        city: "Nairobi, Kenya",
+        lat: -1.2864,
+        lon: 36.8172,
+        year: 2025,
+        focus: "ecosystem and policy"
+      },
+      {
+        company: "Africa Quantum Consortium",
+        lab: "Pan-African Coordination Hub",
+        city: "Harare, Zimbabwe",
+        lat: -17.8252,
+        lon: 31.0335,
+        year: 2024,
+        focus: "research coordination"
+      },
+      {
+        company: "QTunisia",
+        lab: "QWorld Tunisia Chapter",
+        city: "Tunis, Tunisia",
+        lat: 36.8065,
+        lon: 10.1815,
+        year: 2023,
+        focus: "community and training"
+      },
+      {
+        company: "Egypt Quantum Program",
+        lab: "National Workshop Network",
+        city: "New Cairo, Egypt",
+        lat: 30.0131,
+        lon: 31.4913,
+        year: 2024,
+        focus: "education and applied research"
+      },
+      {
+        company: "ARUA Quantum Pathway",
+        lab: "Regional University Cluster",
+        city: "Kigali, Rwanda",
+        lat: -1.9441,
+        lon: 30.0619,
+        year: 2024,
+        focus: "academic collaboration"
+      },
+      {
+        company: "ARUA Quantum Pathway",
+        lab: "Regional University Cluster",
+        city: "Addis Ababa, Ethiopia",
+        lat: 8.9806,
+        lon: 38.7578,
+        year: 2024,
+        focus: "academic collaboration"
+      },
+      {
+        company: "ARUA Quantum Pathway",
+        lab: "Regional University Cluster",
+        city: "Accra, Ghana",
+        lat: 5.6037,
+        lon: -0.187,
+        year: 2024,
+        focus: "academic collaboration"
+      },
+      {
+        company: "ARUA Quantum Pathway",
+        lab: "Regional University Cluster",
+        city: "Lagos, Nigeria",
+        lat: 6.5244,
+        lon: 3.3792,
+        year: 2024,
+        focus: "academic collaboration"
+      },
+      {
+        company: "ARUA Quantum Pathway",
+        lab: "Regional University Cluster",
+        city: "Kampala, Uganda",
+        lat: 0.3476,
+        lon: 32.5825,
+        year: 2024,
+        focus: "academic collaboration"
+      },
+      {
+        company: "ARUA Quantum Pathway",
+        lab: "Regional University Cluster",
+        city: "Dar es Salaam, Tanzania",
+        lat: -6.7924,
+        lon: 39.2083,
+        year: 2024,
+        focus: "academic collaboration"
+      }
+    ];
+
+    const viewModeOptions = [
+      { id: "combined", label: "Combined" },
+      { id: "hardware", label: "Hardware Only" },
+      { id: "ecosystem", label: "Ecosystem Only" }
+    ];
+
+    const regionFocusOptions = [
+      { id: "us", label: "US", lon: -100, lat: 38 },
+      { id: "europe", label: "Europe", lon: 12, lat: 50 },
+      { id: "africa", label: "Africa", lon: 20, lat: 4 },
+      { id: "middle-east", label: "Middle East", lon: 45, lat: 26 },
+      { id: "asia-pacific", label: "Asia-Pacific", lon: 125, lat: 18 }
+    ];
+
+    const sourceRegistry = {
+      "IBM Quantum": { sourceUrl: "https://www.ibm.com/quantum", lastVerified: "2026-03-12" },
+      "IonQ": { sourceUrl: "https://ionq.com", lastVerified: "2026-03-12" },
+      "Xanadu": { sourceUrl: "https://www.xanadu.ai", lastVerified: "2026-03-12" },
+      "D-Wave": { sourceUrl: "https://www.dwavequantum.com", lastVerified: "2026-03-12" },
+      "Anyon Systems": { sourceUrl: "https://anyonsys.com", lastVerified: "2026-03-12" },
+      "Diraq": { sourceUrl: "https://diraq.com", lastVerified: "2026-03-12" },
+      "Quantum Motion": { sourceUrl: "https://quantummotion.com", lastVerified: "2026-03-12" },
+      "Microsoft Quantum": { sourceUrl: "https://news.microsoft.com/source/emea/features/microsoft-opens-state-of-the-art-quantum-lab-in-lyngby-denmark-accelerating-progress-toward-scalable-quantum-computing/", lastVerified: "2026-03-12" },
+      "Quantum Brilliance": { sourceUrl: "https://quantumbrilliance.com", lastVerified: "2026-03-12" },
+      "SpinQ": { sourceUrl: "https://www.spinquanta.com", lastVerified: "2026-03-12" },
+      "QuEra": { sourceUrl: "https://www.quera.com", lastVerified: "2026-03-12" },
+      "PsiQuantum": { sourceUrl: "https://psiquantum.com", lastVerified: "2026-03-12" },
+      "Quantinuum": { sourceUrl: "https://www.quantinuum.com", lastVerified: "2026-03-12" },
+      "PASQAL": { sourceUrl: "https://www.pasqal.com", lastVerified: "2026-03-12" },
+      "Fujitsu + RIKEN": { sourceUrl: "https://www.riken.jp/en/", lastVerified: "2026-03-12" },
+      "IQM": { sourceUrl: "https://meetiqm.com", lastVerified: "2026-03-12" },
+      "USTC": { sourceUrl: "https://en.ustc.edu.cn", lastVerified: "2026-03-12" },
+      "Aramco + PASQAL": { sourceUrl: "https://www.aramco.com/en/news-media/news/2025/aramco-and-pasqal-make-history-with-saudi-arabias-first-quantum-computer", lastVerified: "2026-03-12" },
+      "TII Quantum Research Center": { sourceUrl: "https://www.tii.ae", lastVerified: "2026-03-12" },
+      "IQCC + Quantum Machines": { sourceUrl: "https://www.quantum-machines.co/press_release/quantum-machines-opens-the-israeli-quantum-computing-center/", lastVerified: "2026-03-12" },
+      "QC2 + Quantinuum": { sourceUrl: "https://www.hbku.edu.qa/en/cse/qc2/about", lastVerified: "2026-03-12" },
+      "CHPC South Africa": { sourceUrl: "https://www.chpc.ac.za/chpc-launches-access-to-quantum-computing/", lastVerified: "2026-03-12" },
+      "UCAD + OQI": { sourceUrl: "https://open-quantum-institute.cern/senegal-hosts-first-quantum-computing-school-at-ucad/", lastVerified: "2026-03-12" },
+      "Africa Quantum Summit": { sourceUrl: "https://quantum2025.org/iyq-event/africa-quantum-summit-kenya-edition/", lastVerified: "2026-03-12" },
+      "Africa Quantum Consortium": { sourceUrl: "https://africaquantum.org/", lastVerified: "2026-03-12" },
+      "QTunisia": { sourceUrl: "https://qworld.net/qtunisia/", lastVerified: "2026-03-12" },
+      "Egypt Quantum Program": { sourceUrl: "https://www.eui.edu.eg/news/dr-amr-talaat-inagurates-inaugurated-quantum-technology-workshop", lastVerified: "2026-03-12" },
+      "ARUA Quantum Pathway": { sourceUrl: "https://mea.newsroom.ibm.com/2019-06-12-IBM-Expands-its-Quantum-Computing-Program-to-Africa-with-Wits-University", lastVerified: "2026-03-12" }
+    };
+
+    const yearRange = { min: 2018, max: 2030 };
+    const typeTokens = {
+      "ion trap": "ion",
+      "superconducting": "sup",
+      "photonic": "pho",
+      "neutral atom": "neu",
+      "annealing": "ann",
+      "silicon spin": "sil",
+      "topological": "top",
+      "diamond NV": "dnv",
+      "NMR": "nmr"
+    };
+    const tokenToType = Object.fromEntries(Object.entries(typeTokens).map(([k, v]) => [v, k]));
+    const bandTokens = { small: "s", mid: "m", large: "l" };
+    const tokenToBand = Object.fromEntries(Object.entries(bandTokens).map(([k, v]) => [v, k]));
+    const viewModeTokens = { combined: "c", hardware: "h", ecosystem: "e" };
+    const tokenToViewMode = Object.fromEntries(Object.entries(viewModeTokens).map(([k, v]) => [v, k]));
+
+    const state = {
+      rot: 0,
+      tilt: -0.26,
+      autoSpin: true,
+      dragging: false,
+      activePointerId: null,
+      dragStartX: 0,
+      dragStartY: 0,
+      dragStartRot: 0,
+      dragStartTilt: -0.26,
+      year: 2030,
+      activeTypes: new Set(Object.keys(hardwareColors)),
+      activeBands: new Set(qubitBands.map(b => b.id)),
+      showEcosystem: true,
+      viewMode: "combined",
+      searchTerm: "",
+      timelinePlaying: false,
+      lastTimelineStepMs: 0,
+      targetRot: null,
+      targetTilt: null,
+      hovered: null,
+      visiblePoints: []
+    };
+
+    const boundaries = {
+      usRings: [],
+      canadaProvinceRings: [],
+      euRings: [],
+      africaRings: [],
+      middleEastRings: [],
+      highlightCountryRings: [],
+      loaded: false
+    };
+
+    const canvas = document.getElementById("globe-canvas");
+    const ctx = canvas.getContext("2d");
+    const wrap = document.getElementById("globe-wrap");
+    const tooltip = document.getElementById("tooltip");
+    const hardwareFilters = document.getElementById("hardware-filters");
+    const qubitFilters = document.getElementById("qubit-filters");
+    const ecosystemFilters = document.getElementById("ecosystem-filters");
+    const viewModeFilters = document.getElementById("viewmode-filters");
+    const regionFocus = document.getElementById("region-focus");
+    const yearSlider = document.getElementById("year-slider");
+    const timelinePlay = document.getElementById("timeline-play");
+    const searchInput = document.getElementById("search-input");
+    const searchClear = document.getElementById("search-clear");
+    const yearLabel = document.getElementById("year-label");
+    const visibleCount = document.getElementById("visible-count");
+    const activeTypes = document.getElementById("active-types");
+    const mapStatus = document.getElementById("map-status");
+    const sourceCompany = document.getElementById("source-company");
+    const sourceVerified = document.getElementById("source-verified");
+    const sourceLink = document.getElementById("source-link");
+
+    function getCssVar(name) {
+      return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    }
+
+    function geometryToRings(geometry) {
+      if (!geometry || !geometry.type || !geometry.coordinates) return [];
+      if (geometry.type === "Polygon") return geometry.coordinates;
+      if (geometry.type === "MultiPolygon") return geometry.coordinates.flat();
+      return [];
+    }
+
+    function featureCollectionToRings(featureCollection) {
+      if (!featureCollection || !Array.isArray(featureCollection.features)) return [];
+      return featureCollection.features
+        .flatMap((feature) => geometryToRings(feature.geometry))
+        .filter((ring) => Array.isArray(ring) && ring.length > 1);
+    }
+
+    function normalizeCountryName(name) {
+      return String(name || "").toLowerCase().replace(/[^a-z]/g, "");
+    }
+
+    function extractCountryNameCandidates(properties) {
+      if (!properties || typeof properties !== "object") return [];
+      const keys = [
+        "ADMIN", "admin", "name", "NAME", "NAME_EN", "name_en",
+        "SOVEREIGNT", "sovereignt", "FORMAL_EN", "formal_en", "BRK_NAME"
+      ];
+      const fromKnownKeys = keys
+        .map((k) => properties[k])
+        .filter((v) => typeof v === "string" && v.trim());
+      const fallbackStrings = Object.values(properties).filter((v) => typeof v === "string" && v.trim());
+      return [...new Set([...fromKnownKeys, ...fallbackStrings])];
+    }
+
+    function buildHighlightCountryRings(featureCollection) {
+      if (!featureCollection || !Array.isArray(featureCollection.features)) return [];
+
+      const targets = [
+        { name: "United States", aliases: ["unitedstates", "unitedstatesofamerica", "usa", "us"] },
+        { name: "Canada", aliases: ["canada"] },
+        { name: "United Kingdom", aliases: ["unitedkingdom", "uk", "greatbritain"] },
+        { name: "France", aliases: ["france"] },
+        { name: "Japan", aliases: ["japan"] },
+        { name: "China", aliases: ["china", "peoplesrepublicofchina"] },
+        { name: "Australia", aliases: ["australia"] },
+        { name: "Saudi Arabia", aliases: ["saudiarabia", "kingdomofsaudiarabia"] },
+        { name: "United Arab Emirates", aliases: ["unitedarabemirates", "uae"] },
+        { name: "Israel", aliases: ["israel"] },
+        { name: "Qatar", aliases: ["qatar", "stateofqatar"] },
+        { name: "South Africa", aliases: ["southafrica", "republicofsouthafrica"] }
+      ];
+
+      const aliasMap = new Map();
+      targets.forEach((t) => {
+        t.aliases.forEach((alias) => aliasMap.set(alias, t.name));
+      });
+
+      const grouped = new Map(targets.map((t) => [t.name, []]));
+
+      featureCollection.features.forEach((feature) => {
+        const candidates = extractCountryNameCandidates(feature.properties).map(normalizeCountryName);
+        const matched = candidates.map((c) => aliasMap.get(c)).find(Boolean);
+        if (!matched) return;
+        const rings = geometryToRings(feature.geometry);
+        if (rings.length > 0) grouped.get(matched).push(...rings);
+      });
+
+      return Array.from(grouped.entries())
+        .filter(([, rings]) => rings.length > 0)
+        .map(([country, rings]) => ({ country, rings }));
+    }
+
+    function buildAfricaCountryRings(featureCollection) {
+      if (!featureCollection || !Array.isArray(featureCollection.features)) return [];
+
+      const africaAliases = new Set([
+        "algeria", "angola", "benin", "botswana", "burkinafaso", "burundi", "caboverde",
+        "cameroon", "centralafricanrepublic", "chad", "comoros", "democraticrepublicofthecongo",
+        "republicofthecongo", "cotedivoire", "djibouti", "egypt", "equatorialguinea", "eritrea",
+        "eswatini", "swaziland", "ethiopia", "gabon", "gambia", "ghana", "guinea", "guineabissau",
+        "kenya", "lesotho", "liberia", "libya", "madagascar", "malawi", "mali", "mauritania",
+        "mauritius", "morocco", "mozambique", "namibia", "niger", "nigeria", "rwanda",
+        "saotomeandprincipe", "senegal", "seychelles", "sierraleone", "somalia", "southafrica",
+        "southsudan", "sudan", "tanzania", "togo", "tunisia", "uganda", "zambia",
+        "zimbabwe", "westernsahara"
+      ]);
+
+      const rings = [];
+      featureCollection.features.forEach((feature) => {
+        const candidates = extractCountryNameCandidates(feature.properties).map(normalizeCountryName);
+        const isAfricanCountry = candidates.some((c) => africaAliases.has(c));
+        if (!isAfricanCountry) return;
+        rings.push(...geometryToRings(feature.geometry));
+      });
+      return rings;
+    }
+
+    function buildMiddleEastCountryRings(featureCollection) {
+      if (!featureCollection || !Array.isArray(featureCollection.features)) return [];
+
+      const middleEastAliases = new Set([
+        "bahrain", "cyprus", "egypt", "iran", "iraq", "israel", "jordan", "kuwait", "lebanon",
+        "oman", "palestine", "qatar", "saudiarabia", "syria", "turkiye", "turkey",
+        "unitedarabemirates", "uae", "yemen"
+      ]);
+
+      const rings = [];
+      featureCollection.features.forEach((feature) => {
+        const candidates = extractCountryNameCandidates(feature.properties).map(normalizeCountryName);
+        const isMiddleEastCountry = candidates.some((c) => middleEastAliases.has(c));
+        if (!isMiddleEastCountry) return;
+        rings.push(...geometryToRings(feature.geometry));
+      });
+      return rings;
+    }
+
+    async function loadBoundaryData() {
+      const usUrl = "https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/us-states.json";
+      const canadaUrl = "https://raw.githubusercontent.com/codeforgermany/click_that_hood/main/public/data/canada.geojson";
+      const euUrl = "https://raw.githubusercontent.com/leakyMirror/map-of-europe/master/GeoJSON/europe.geojson";
+      const worldUrl = "https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson";
+      try {
+        const [usReq, canadaReq, euReq, worldReq] = await Promise.allSettled([fetch(usUrl), fetch(canadaUrl), fetch(euUrl), fetch(worldUrl)]);
+
+        if (usReq.status === "fulfilled" && usReq.value.ok) {
+          const usGeo = await usReq.value.json();
+          boundaries.usRings = featureCollectionToRings(usGeo);
+        }
+        if (canadaReq.status === "fulfilled" && canadaReq.value.ok) {
+          const canadaGeo = await canadaReq.value.json();
+          boundaries.canadaProvinceRings = featureCollectionToRings(canadaGeo);
+        }
+        if (euReq.status === "fulfilled" && euReq.value.ok) {
+          const euGeo = await euReq.value.json();
+          boundaries.euRings = featureCollectionToRings(euGeo);
+        }
+        if (worldReq.status === "fulfilled" && worldReq.value.ok) {
+          const worldGeo = await worldReq.value.json();
+          boundaries.africaRings = buildAfricaCountryRings(worldGeo);
+          boundaries.middleEastRings = buildMiddleEastCountryRings(worldGeo);
+          boundaries.highlightCountryRings = buildHighlightCountryRings(worldGeo);
+        }
+
+        boundaries.loaded =
+          boundaries.usRings.length > 0 ||
+          boundaries.canadaProvinceRings.length > 0 ||
+          boundaries.euRings.length > 0 ||
+          boundaries.africaRings.length > 0 ||
+          boundaries.middleEastRings.length > 0 ||
+          boundaries.highlightCountryRings.length > 0;
+
+        if (boundaries.loaded) {
+          mapStatus.textContent = "Boundary overlays active: US states, Canada provinces, Europe lines, Africa outlines, Middle East outlines, and highlighted countries (US, Canada, UK, France, Japan, China, Australia, Saudi Arabia, UAE, Israel, Qatar, South Africa).";
+        } else {
+          mapStatus.textContent = "Boundary overlays unavailable. Marker view still active.";
+        }
+      } catch (err) {
+        boundaries.loaded = false;
+        mapStatus.textContent = "Could not load state/country boundaries (network blocked). Marker view still active.";
+      }
+    }
+
+    function parseHashState(hash) {
+      const raw = (hash || "").replace(/^#/, "");
+      const params = new URLSearchParams(raw);
+      const parsed = {};
+
+      const year = Number(params.get("y"));
+      if (Number.isFinite(year)) {
+        parsed.year = Math.min(yearRange.max, Math.max(yearRange.min, Math.round(year)));
+      }
+
+      const t = params.get("t");
+      if (t === "none") {
+        parsed.activeTypes = new Set();
+      } else if (t) {
+        const types = t.split(",")
+          .map(token => tokenToType[token])
+          .filter(Boolean);
+        if (types.length > 0) parsed.activeTypes = new Set(types);
+      }
+
+      const q = params.get("q");
+      if (q === "none") {
+        parsed.activeBands = new Set();
+      } else if (q) {
+        const bands = q.split(",")
+          .map(token => tokenToBand[token])
+          .filter(Boolean);
+        if (bands.length > 0) parsed.activeBands = new Set(bands);
+      }
+
+      const ecosystem = params.get("e");
+      if (ecosystem === "0") parsed.showEcosystem = false;
+      if (ecosystem === "1") parsed.showEcosystem = true;
+
+      const viewMode = params.get("vm");
+      if (viewMode && tokenToViewMode[viewMode]) {
+        parsed.viewMode = tokenToViewMode[viewMode];
+      }
+
+      const search = params.get("s");
+      if (typeof search === "string") {
+        parsed.searchTerm = search.slice(0, 60);
+      }
+
+      return parsed;
+    }
+
+    function applyHashState(hash) {
+      const parsed = parseHashState(hash);
+      if (parsed.year !== undefined) state.year = parsed.year;
+      if (parsed.activeTypes !== undefined) state.activeTypes = parsed.activeTypes;
+      if (parsed.activeBands !== undefined) state.activeBands = parsed.activeBands;
+      if (parsed.showEcosystem !== undefined) state.showEcosystem = parsed.showEcosystem;
+      if (parsed.viewMode !== undefined) state.viewMode = parsed.viewMode;
+      if (parsed.searchTerm !== undefined) state.searchTerm = parsed.searchTerm;
+    }
+
+    function buildHashFromState() {
+      const params = new URLSearchParams();
+      params.set("y", String(state.year));
+
+      const types = Array.from(state.activeTypes)
+        .map(type => typeTokens[type])
+        .filter(Boolean)
+        .sort();
+      params.set("t", types.length ? types.join(",") : "none");
+
+      const bands = Array.from(state.activeBands)
+        .map(band => bandTokens[band])
+        .filter(Boolean)
+        .sort();
+      params.set("q", bands.length ? bands.join(",") : "none");
+      params.set("e", state.showEcosystem ? "1" : "0");
+      params.set("vm", viewModeTokens[state.viewMode] || "c");
+      if (state.searchTerm.trim()) params.set("s", state.searchTerm.trim());
+
+      return `#${params.toString()}`;
+    }
+
+    function syncHashFromState() {
+      const nextHash = buildHashFromState();
+      if (window.location.hash !== nextHash) {
+        history.replaceState(null, "", nextHash);
+      }
+    }
+
+    function syncControlsFromState() {
+      hardwareFilters.querySelectorAll("input[data-type]").forEach((input) => {
+        input.checked = state.activeTypes.has(input.dataset.type);
+      });
+      qubitFilters.querySelectorAll("input[data-band]").forEach((input) => {
+        input.checked = state.activeBands.has(input.dataset.band);
+      });
+      ecosystemFilters.querySelectorAll("input[data-layer='ecosystem']").forEach((input) => {
+        input.checked = state.showEcosystem;
+      });
+      viewModeFilters.querySelectorAll("input[data-viewmode]").forEach((input) => {
+        input.checked = input.dataset.viewmodel === state.viewMode;
+      });
+      searchInput.value = state.searchTerm;
+      yearSlider.value = String(state.year);
+      yearLabel.textContent = String(state.year);
+      updateTimelineButton();
+    }
+
+    function setupFilters() {
+      Object.entries(hardwareColors).forEach(([type, color]) => {
+        const id = `h-${type.replace(/\s+/g, "-")}`;
+        const checked = state.activeTypes.has(type) ? "checked" : "";
+        hardwareFilters.insertAdjacentHTML("beforeend", `
+          <label class="chip" for="${id}">
+            <input id="${id}" type="checkbox" ${checked} data-type="${type}" />
+            <span class="dot" style="background:${color}"></span>
+            <span>${type}</span>
+          </label>
+        `);
+      });
+
+      qubitBands.forEach((band) => {
+        const id = `q-${band.id}`;
+        const checked = state.activeBands.has(band.id) ? "checked" : "";
+        qubitFilters.insertAdjacentHTML("beforeend", `
+          <label class="chip" for="${id}">
+            <input id="${id}" type="checkbox" ${checked} data-band="${band.id}" />
+            <span class="dot" style="background: var(--marker)"></span>
+            <span>${band.label}</span>
+          </label>
+        `);
+      });
+
+      const ecoChecked = state.showEcosystem ? "checked" : "";
+      ecosystemFilters.insertAdjacentHTML("beforeend", `
+        <label class="chip" for="layer-ecosystem">
+          <input id="layer-ecosystem" type="checkbox" ${ecoChecked} data-layer="ecosystem" />
+          <span class="dot" style="background: #9bf6ff"></span>
+          <span>Ecosystem Nodes</span>
+        </label>
+      `);
+
+      viewModeOptions.forEach((option) => {
+        const id = `view-${option.id}`;
+        const checked = state.viewMode === option.id ? "checked" : "";
+        viewModeFilters.insertAdjacentHTML("beforeend", `
+          <label class="chip" for="${id}">
+            <input id="${id}" name="view-mode" type="radio" ${checked} data-viewmode="${option.id}" />
+            <span class="dot" style="background: #d0effa"></span>
+            <span>${option.label}</span>
+          </label>
+        `);
+      });
+
+      regionFocusOptions.forEach((region) => {
+        regionFocus.insertAdjacentHTML("beforeend", `
+          <button type="button" class="tiny-btn" data-focus="${region.id}">${region.label}</button>
+        `);
+      });
+
+      hardwareFilters.addEventListener("change", (e) => {
+        if (!e.target.matches("input[data-type]")) return;
+        const t = e.target.dataset.type;
+        if (e.target.checked) state.activeTypes.add(t);
+        else state.activeTypes.delete(t);
+        syncHashFromState();
+      });
+
+      qubitFilters.addEventListener("change", (e) => {
+        if (!e.target.matches("input[data-band]")) return;
+        const b = e.target.dataset.band;
+        if (e.target.checked) state.activeBands.add(b);
+        else state.activeBands.delete(b);
+        syncHashFromState();
+      });
+
+      ecosystemFilters.addEventListener("change", (e) => {
+        if (!e.target.matches("input[data-layer='ecosystem']")) return;
+        state.showEcosystem = e.target.checked;
+        syncHashFromState();
+      });
+
+      viewModeFilters.addEventListener("change", (e) => {
+        if (!e.target.matches("input[data-viewmode]")) return;
+        state.viewMode = e.target.dataset.viewmodel;
+        syncHashFromState();
+      });
+
+      regionFocus.addEventListener("click", (e) => {
+        const btn = e.target.closest("button[data-focus]");
+        if (!btn) return;
+        const selected = regionFocusOptions.find((r) => r.id === btn.dataset.focus);
+        if (!selected) return;
+        focusRegion(selected);
+      });
+    }
+
+    function qubitBandFor(count) {
+      return qubitBands.find((b) => count >= b.min && count <= b.max)?.id;
+    }
+
+    function canShowHardware() {
+      return state.viewMode === "combined" || state.viewMode === "hardware";
+    }
+
+    function canShowEcosystem() {
+      return state.showEcosystem && (state.viewMode === "combined" || state.viewMode === "ecosystem");
+    }
+
+    function matchesSearch(item) {
+      const term = state.searchTerm.trim().toLowerCase();
+      if (!term) return true;
+      const text = [
+        item.company,
+        item.lab,
+        item.city,
+        item.type,
+        item.focus
+      ].filter(Boolean).join(" ").toLowerCase();
+      return text.includes(term);
+    }
+
+    function getSourceMeta(item) {
+      return sourceRegistry[item.company] || {
+        sourceUrl: "https://quantum-computing.ibm.com/",
+        lastVerified: "2026-03-12"
+      };
+    }
+
+    function renderSourcePanel(item) {
+      if (!item) {
+        sourceCompany.textContent = "Hover a marker to view source metadata.";
+        sourceVerified.textContent = "";
+        sourceLink.textContent = "";
+        sourceLink.removeAttribute("href");
+        return;
+      }
+      const meta = getSourceMeta(item);
+      const title = item.nodeKind === "ecosystem"
+        ? `${item.company} (${item.city}) - Ecosystem Node`
+        : `${item.company} (${item.city})`;
+      sourceCompany.textContent = title;
+      sourceVerified.textContent = `Last verified: ${meta.lastVerified}`;
+      sourceLink.textContent = meta.sourceUrl;
+      sourceLink.href = meta.sourceUrl;
+    }
+
+    function updateTimelineButton() {
+      timelinePlay.textContent = state.timelinePlaying ? "Pause Timeline" : "Play Timeline";
+      timelinePlay.classList.toggle("active", state.timelinePlaying);
+    }
+
+    function normalizeAngle(rad) {
+      let x = rad;
+      while (x > Math.PI) x -= Math.PI * 2;
+      while (x < -Math.PI) x += Math.PI * 2;
+      return x;
+    }
+
+    function focusRegion(region) {
+      state.autoSpin = false;
+      state.targetRot = normalizeAngle(-degToRad(region.lon));
+      state.targetTilt = clamp(-degToRad(region.lat) * 0.85, -1.1, 1.1);
+      regionFocus.querySelectorAll("button[data-focus]").forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.focus === region.id);
+      });
+    }
+
+    function extractCountryFromCity(city) {
+      if (!city || typeof city !== "string") return "";
+      const parts = city.split(",");
+      return parts[parts.length - 1].trim();
+    }
+
+    function normalizeCountryNameForLabel(raw) {
+      const compact = normalizeCountryName(raw);
+      const aliasMap = {
+        usa: "United States",
+        unitedstates: "United States",
+        unitedstatesofamerica: "United States",
+        uk: "United Kingdom",
+        unitedkingdom: "United Kingdom",
+        uae: "United Arab Emirates",
+        unitedarabemirates: "United Arab Emirates",
+        peoplesrepublicofchina: "China"
+      };
+      return aliasMap[compact] || raw;
+    }
+
+    function getVisibleCountryNames() {
+      const names = new Set();
+      if (canShowHardware()) {
+        quantumSites.forEach((site) => {
+          if (site.year > state.year) return;
+          if (!state.activeTypes.has(site.type)) return;
+          const band = qubitBandFor(site.qubits);
+          if (!band || !state.activeBands.has(band)) return;
+          const country = normalizeCountryNameForLabel(extractCountryFromCity(site.city));
+          if (countryAnchors[country]) names.add(country);
+        });
+      }
+
+      if (canShowEcosystem()) {
+        ecosystemNodes.forEach((node) => {
+          if (node.year > state.year) return;
+          const country = normalizeCountryNameForLabel(extractCountryFromCity(node.city));
+          if (countryAnchors[country]) names.add(country);
+        });
+      }
+
+      return Array.from(names);
+    }
+
+    function rectsOverlap(a, b) {
+      return !(a.right < b.left || a.left > b.right || a.bottom < b.top || a.top > b.bottom);
+    }
+
+    function clamp(n, min, max) {
+      return Math.min(max, Math.max(min, n));
+    }
+
+    function resolveCalloutY(track, desiredY, minGap, top, bottom) {
+      let y = clamp(desiredY, top, bottom);
+      for (let i = 0; i < track.length; i += 1) {
+        if (Math.abs(y - track[i]) < minGap) {
+          y = track[i] + minGap;
+        }
+      }
+      y = clamp(y, top, bottom);
+      track.push(y);
+      track.sort((a, b) => a - b);
+      return y;
+    }
+
+    function drawLabelBox(text, x, y, align) {
+      ctx.font = "11px 'Segoe UI', sans-serif";
+      const textW = Math.ceil(ctx.measureText(text).width);
+      const padX = 5;
+      const padY = 3;
+      const h = 16;
+      const w = textW + padX * 2;
+      const left = align === "left" ? x : x - w;
+      const top = y - h + 4;
+
+      ctx.fillStyle = "rgba(4, 22, 30, 0.88)";
+      ctx.strokeStyle = "rgba(172, 226, 245, 0.32)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.rect(left, top, w, h);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = "rgba(239, 249, 253, 0.96)";
+      ctx.textAlign = align;
+      ctx.textBaseline = "alphabetic";
+      ctx.fillText(text, align === "left" ? left + padX : left + w - padX, y);
+
+      return { left, top, right: left + w, bottom: top + h };
+    }
+
+    function drawCountryLabels(width, height, cx, cy, radius) {
+      const names = getVisibleCountryNames();
+      if (names.length === 0) return;
+
+      const candidates = names
+        .map((name) => {
+          const anchor = countryAnchors[name];
+          const p = project(anchor.lat, anchor.lon, state.rot, state.tilt, radius, cx, cy);
+          if (!p.visible) return null;
+          return { name, x: p.x, y: p.y };
+        })
+        .filter(Boolean)
+        .sort((a, b) => a.y - b.y);
+
+      const placed = [];
+      const leftTrack = [];
+      const rightTrack = [];
+      const topBound = cy - radius + 10;
+      const bottomBound = cy + radius - 10;
+
+      ctx.save();
+      candidates.forEach((item) => {
+        const side = item.x >= cx ? "right" : "left";
+        const align = side === "right" ? "left" : "right";
+        const inlineX = side === "right" ? item.x + 9 : item.x - 9;
+        const inlineY = item.y - 3;
+
+        ctx.font = "11px 'Segoe UI', sans-serif";
+        const w = Math.ceil(ctx.measureText(item.name).width) + 10;
+        const h = 16;
+        const inlineRect = {
+          left: align === "left" ? inlineX : inlineX - w,
+          right: align === "left" ? inlineX + w : inlineX,
+          top: inlineY - h + 4,
+          bottom: inlineY + 4
+        };
+        const fitsInline =
+          inlineRect.left >= 6 &&
+          inlineRect.right <= width - 6 &&
+          inlineRect.top >= 6 &&
+          inlineRect.bottom <= height - 6 &&
+          !placed.some((r) => rectsOverlap(r, inlineRect));
+
+        if (fitsInline) {
+          const rect = drawLabelBox(item.name, inlineX, inlineY, align);
+          placed.push(rect);
+          return;
+        }
+
+        const labelY = resolveCalloutY(side === "right" ? rightTrack : leftTrack, item.y, 15, topBound, bottomBound);
+        const preferred = side === "right" ? cx + radius + 24 : cx - radius - 24;
+        const labelX = side === "right"
+          ? clamp(preferred, 8, width - 8 - w)
+          : clamp(preferred, 8 + w, width - 8);
+
+        const elbowX = side === "right" ? item.x + 12 : item.x - 12;
+        const lineEndX = side === "right" ? labelX - 4 : labelX + 4;
+        ctx.strokeStyle = "rgba(193, 234, 247, 0.72)";
+        ctx.lineWidth = 0.9;
+        ctx.beginPath();
+        ctx.moveTo(item.x, item.y);
+        ctx.lineTo(elbowX, item.y);
+        ctx.lineTo(lineEndX, labelY - 4);
+        ctx.stroke();
+
+        const rect = drawLabelBox(item.name, labelX, labelY, align);
+        placed.push(rect);
+      });
+      ctx.restore();
+    }
+
+    function project(latDeg, lonDeg, rot, tilt, radius, cx, cy) {
+      const lat = degToRad(latDeg);
+      const lon = degToRad(lonDeg) + rot;
+
+      const x = Math.cos(lat) * Math.sin(lon);
+      const y = Math.sin(lat);
+      const z = Math.cos(lat) * Math.cos(lon);
+
+      const y2 = y * Math.cos(tilt) - z * Math.sin(tilt);
+      const z2 = y * Math.sin(tilt) + z * Math.cos(tilt);
+
+      const visible = z2 > 0;
+      return {
+        x: cx + x * radius,
+        y: cy - y2 * radius,
+        z: z2,
+        visible
+      };
+    }
+
+    function drawGlobe(width, height) {
+      const dpr = Math.max(1, window.devicePixelRatio || 1);
+      canvas.width = Math.floor(width * dpr);
+      canvas.height = Math.floor(height * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      const cx = width / 2;
+      const cy = height / 2;
+      const radius = Math.min(width, height) * 0.42;
+
+      ctx.clearRect(0, 0, width, height);
+
+      const ocean = ctx.createRadialGradient(cx - radius * 0.2, cy - radius * 0.3, radius * 0.2, cx, cy, radius * 1.1);
+      ocean.addColorStop(0, "#1e6d87");
+      ocean.addColorStop(1, "#0b3444");
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+      ctx.fillStyle = ocean;
+      ctx.fill();
+
+      drawGrid(cx, cy, radius);
+      drawBoundaries(cx, cy, radius);
+      drawMarkers(cx, cy, radius);
+      drawCountryLabels(width, height, cx, cy, radius);
+
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+      ctx.lineWidth = 1.4;
+      ctx.strokeStyle = "rgba(193, 234, 247, 0.35)";
+      ctx.stroke();
+
+      drawTitleOnCanvas(width);
+    }
+
+    function drawGrid(cx, cy, radius) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+      ctx.clip();
+
+      ctx.strokeStyle = "rgba(188, 229, 242, 0.18)";
+      ctx.lineWidth = 1;
+
+      for (let lat = -60; lat <= 60; lat += 30) {
+        ctx.beginPath();
+        let started = false;
+        for (let lon = -180; lon <= 180; lon += 2) {
+          const p = project(lat, lon, state.rot, state.tilt, radius, cx, cy);
+          if (!p.visible) {
+            started = false;
+            continue;
+          }
+          if (!started) {
+            ctx.moveTo(p.x, p.y);
+            started = true;
+          } else {
+            ctx.lineTo(p.x, p.y);
+          }
+        }
+        ctx.stroke();
+      }
+
+      for (let lon = -180; lon < 180; lon += 20) {
+        ctx.beginPath();
+        let started = false;
+        for (let lat = -88; lat <= 88; lat += 2) {
+          const p = project(lat, lon, state.rot, state.tilt, radius, cx, cy);
+          if (!p.visible) {
+            started = false;
+            continue;
+          }
+          if (!started) {
+            ctx.moveTo(p.x, p.y);
+            started = true;
+          } else {
+            ctx.lineTo(p.x, p.y);
+          }
+        }
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawBoundaryRing(ring, cx, cy, radius) {
+      if (!Array.isArray(ring) || ring.length < 2) return;
+      ctx.beginPath();
+      let started = false;
+      for (let i = 0; i < ring.length; i += 1) {
+        const coord = ring[i];
+        if (!Array.isArray(coord) || coord.length < 2) continue;
+        const lon = coord[0];
+        const lat = coord[1];
+        const p = project(lat, lon, state.rot, state.tilt, radius, cx, cy);
+        if (!p.visible) {
+          started = false;
+          continue;
+        }
+        if (!started) {
+          ctx.moveTo(p.x, p.y);
+          started = true;
+        } else {
+          ctx.lineTo(p.x, p.y);
+        }
+      }
+      ctx.stroke();
+    }
+
+    function drawBoundaries(cx, cy, radius) {
+      if (!boundaries.loaded) return;
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+      ctx.clip();
+
+      ctx.lineWidth = 0.8;
+
+      ctx.strokeStyle = "rgba(181, 123, 255, 0.78)";
+      boundaries.usRings.forEach((ring) => drawBoundaryRing(ring, cx, cy, radius));
+
+      ctx.strokeStyle = "rgba(122, 205, 255, 0.72)";
+      ctx.lineWidth = 0.9;
+      boundaries.canadaProvinceRings.forEach((ring) => drawBoundaryRing(ring, cx, cy, radius));
+
+      ctx.strokeStyle = "rgba(132, 228, 188, 0.62)";
+      ctx.lineWidth = 0.8;
+      boundaries.euRings.forEach((ring) => drawBoundaryRing(ring, cx, cy, radius));
+
+      ctx.strokeStyle = "rgba(166, 213, 255, 0.58)";
+      ctx.lineWidth = 0.9;
+      boundaries.africaRings.forEach((ring) => drawBoundaryRing(ring, cx, cy, radius));
+
+      ctx.strokeStyle = "rgba(255, 94, 94, 0.78)";
+      ctx.lineWidth = 0.95;
+      boundaries.middleEastRings.forEach((ring) => drawBoundaryRing(ring, cx, cy, radius));
+
+      boundaries.highlightCountryRings.forEach((entry) => {
+        ctx.fillStyle = "rgba(255, 226, 122, 0.08)";
+        ctx.strokeStyle = "rgba(255, 234, 164, 0.84)";
+        ctx.lineWidth = 1.15;
+        entry.rings.forEach((ring) => {
+          if (!Array.isArray(ring) || ring.length < 3) return;
+          ctx.beginPath();
+          let started = false;
+          for (let i = 0; i < ring.length; i += 1) {
+            const coord = ring[i];
+            if (!Array.isArray(coord) || coord.length < 2) continue;
+            const lon = coord[0];
+            const lat = coord[1];
+            const p = project(lat, lon, state.rot, state.tilt, radius, cx, cy);
+            if (!p.visible) {
+              started = false;
+              continue;
+            }
+            if (!started) {
+              ctx.moveTo(p.x, p.y);
+              started = true;
+            } else {
+              ctx.lineTo(p.x, p.y);
+            }
+          }
+          if (started) {
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+          }
+        });
+      });
+
+      ctx.restore();
+    }
+
+    function drawMarkers(cx, cy, radius) {
+      state.visiblePoints = [];
+
+      const filtered = canShowHardware()
+        ? quantumSites.filter((s) => {
+          if (s.year > state.year) return false;
+          if (!state.activeTypes.has(s.type)) return false;
+          const band = qubitBandFor(s.qubits);
+          return band && state.activeBands.has(band);
+        })
+        : [];
+
+      const sorted = filtered.slice().sort((a, b) => a.qubits - b.qubits);
+      const searchActive = state.searchTerm.trim().length > 0;
+
+      sorted.forEach((site) => {
+        const p = project(site.lat, site.lon, state.rot, state.tilt, radius, cx, cy);
+        if (!p.visible) return;
+
+        const size = 4 + Math.min(12, Math.log10(site.qubits + 1) * 3.7);
+        const color = hardwareColors[site.type] || getCssVar("--marker");
+        const isMatch = matchesSearch(site);
+
+        if (searchActive && !isMatch) ctx.globalAlpha = 0.25;
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, size + 4, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(255, 255, 255, 0.08)";
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, size, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.fill();
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = "rgba(13, 34, 45, 0.9)";
+        ctx.stroke();
+
+        if (searchActive && isMatch) {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, size + 6, 0, Math.PI * 2);
+          ctx.lineWidth = 1.4;
+          ctx.strokeStyle = "rgba(255, 246, 173, 0.85)";
+          ctx.stroke();
+        }
+
+        ctx.globalAlpha = 1;
+        state.visiblePoints.push({ ...site, x: p.x, y: p.y, r: size + 3, sourceMeta: getSourceMeta(site) });
+      });
+
+      let ecosystemVisible = 0;
+      if (canShowEcosystem()) {
+        ecosystemNodes
+          .filter((n) => n.year <= state.year)
+          .forEach((node) => {
+            const p = project(node.lat, node.lon, state.rot, state.tilt, radius, cx, cy);
+            if (!p.visible) return;
+            const size = 5;
+            const isMatch = matchesSearch(node);
+
+            ctx.save();
+            ctx.translate(p.x, p.y);
+            ctx.rotate(Math.PI / 4);
+            if (searchActive && !isMatch) ctx.globalAlpha = 0.25;
+            ctx.fillStyle = "rgba(155, 246, 255, 0.82)";
+            ctx.strokeStyle = "rgba(8, 35, 47, 0.95)";
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.rect(-size, -size, size * 2, size * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            if (searchActive && isMatch) {
+              ctx.strokeStyle = "rgba(255, 246, 173, 0.88)";
+              ctx.lineWidth = 1.3;
+              ctx.beginPath();
+              ctx.rect(-size - 3, -size - 3, (size + 3) * 2, (size + 3) * 2);
+              ctx.stroke();
+            }
+            ctx.restore();
+
+            state.visiblePoints.push({ ...node, nodeKind: "ecosystem", x: p.x, y: p.y, r: size + 4, sourceMeta: getSourceMeta(node) });
+            ecosystemVisible += 1;
+          });
+      }
+
+      const totalVisible = filtered.length + ecosystemVisible;
+      visibleCount.textContent = `${totalVisible} points visible (${filtered.length} hardware, ${ecosystemVisible} ecosystem)`;
+      activeTypes.textContent = `${state.activeTypes.size} hardware types active | mode: ${state.viewMode}`;
+    }
+
+    function drawTitleOnCanvas(width) {
+      ctx.fillStyle = "rgba(210, 239, 248, 0.9)";
+      ctx.font = "600 15px 'Segoe UI', sans-serif";
+      ctx.fillText("Quantum Hardware Locations", 18, 28);
+      ctx.fillStyle = "rgba(185, 220, 235, 0.75)";
+      ctx.font = "12px 'Segoe UI', sans-serif";
+      ctx.fillText(`Timeline: 2018 to ${state.year}`, 18, 47);
+      if (state.searchTerm.trim()) {
+        ctx.fillStyle = "rgba(255, 243, 175, 0.9)";
+        ctx.fillText(`Search: ${state.searchTerm}`, 18, 64);
+      }
+      if (width > 760) {
+        ctx.textAlign = "right";
+        ctx.fillText("Drag left/right + up/down to inspect regions", width - 18, 28);
+        ctx.textAlign = "left";
+      }
+    }
+
+    function degToRad(d) {
+      return (d * Math.PI) / 180;
+    }
+
+    function animate() {
+      const now = performance.now();
+
+      if (state.targetRot !== null && state.targetTilt !== null) {
+        const rotDelta = normalizeAngle(state.targetRot - state.rot);
+        const tiltDelta = state.targetTilt - state.tilt;
+        state.rot += rotDelta * 0.12;
+        state.tilt += tiltDelta * 0.12;
+        if (Math.abs(rotDelta) < 0.0025 && Math.abs(tiltDelta) < 0.0025) {
+          state.rot = state.targetRot;
+          state.tilt = state.targetTilt;
+          state.targetRot = null;
+          state.targetTilt = null;
+          regionFocus.querySelectorAll("button[data-focus]").forEach((btn) => btn.classList.remove("active"));
+          state.autoSpin = true;
+        }
+      }
+
+      if (state.timelinePlaying && now - state.lastTimelineStepMs > 1000) {
+        const nextYear = state.year + 1;
+        state.year = nextYear > yearRange.max ? yearRange.min : nextYear;
+        yearSlider.value = String(state.year);
+        yearLabel.textContent = String(state.year);
+        state.lastTimelineStepMs = now;
+        syncHashFromState();
+      }
+
+      if (state.autoSpin && !state.dragging) {
+        state.rot += 0.0022;
+      }
+      drawGlobe(wrap.clientWidth, wrap.clientHeight);
+      requestAnimationFrame(animate);
+    }
+
+    function handlePointerMove(e) {
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      if (state.dragging) {
+        const dx = e.clientX - state.dragStartX;
+        const dy = e.clientY - state.dragStartY;
+        state.rot = state.dragStartRot + dx * 0.008;
+        state.tilt = clamp(state.dragStartTilt - dy * 0.006, -1.18, 1.18);
+        return;
+      }
+
+      const hit = findHoveredPoint(x, y);
+      state.hovered = hit;
+      if (!hit) {
+        tooltip.style.opacity = 0;
+        renderSourcePanel(null);
+        return;
+      }
+
+      if (hit.nodeKind === "ecosystem") {
+        const meta = getSourceMeta(hit);
+        tooltip.innerHTML = `
+          <strong>${hit.company}</strong>
+          <div>${hit.lab}</div>
+          <div>${hit.city}</div>
+          <div>Category: Ecosystem Node (No confirmed local QPU)</div>
+          <div>Focus: ${hit.focus}</div>
+          <div>Year: ${hit.year}</div>
+          <div>Verified: ${meta.lastVerified}</div>
+        `;
+      } else {
+        const meta = getSourceMeta(hit);
+        tooltip.innerHTML = `
+          <strong>${hit.company}</strong>
+          <div>${hit.lab}</div>
+          <div>${hit.city}</div>
+          <div>Type: ${hit.type}</div>
+          <div>Qubits: ${hit.qubits}</div>
+          <div>Year Built: ${hit.year}</div>
+          <div>Verified: ${meta.lastVerified}</div>
+        `;
+      }
+
+      tooltip.style.left = `${hit.x}px`;
+      tooltip.style.top = `${hit.y}px`;
+      tooltip.style.opacity = 1;
+      renderSourcePanel(hit);
+    }
+
+    function findHoveredPoint(x, y) {
+      let best = null;
+      let bestDist = Infinity;
+      for (const p of state.visiblePoints) {
+        const dx = x - p.x;
+        const dy = y - p.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist <= p.r && dist < bestDist) {
+          best = p;
+          bestDist = dist;
+        }
+      }
+      return best;
+    }
+
+    function setupInput() {
+      canvas.addEventListener("pointerdown", (e) => {
+        if (state.dragging) return;
+        state.dragging = true;
+        state.activePointerId = e.pointerId;
+        state.autoSpin = false;
+        state.targetRot = null;
+        state.targetTilt = null;
+        regionFocus.querySelectorAll("button[data-focus]").forEach((btn) => btn.classList.remove("active"));
+        state.dragStartX = e.clientX;
+        state.dragStartY = e.clientY;
+        state.dragStartRot = state.rot;
+        state.dragStartTilt = state.tilt;
+        canvas.classList.add("dragging");
+        canvas.setPointerCapture(e.pointerId);
+      });
+
+      window.addEventListener("pointerup", (e) => {
+        if (!state.dragging) return;
+        if (state.activePointerId !== null && e.pointerId !== state.activePointerId) return;
+        state.dragging = false;
+        state.activePointerId = null;
+        canvas.classList.remove("dragging");
+        setTimeout(() => {
+          state.autoSpin = true;
+        }, 800);
+      });
+
+      window.addEventListener("pointercancel", (e) => {
+        if (!state.dragging) return;
+        if (state.activePointerId !== null && e.pointerId !== state.activePointerId) return;
+        state.dragging = false;
+        state.activePointerId = null;
+        canvas.classList.remove("dragging");
+        state.autoSpin = true;
+      });
+
+      canvas.addEventListener("pointermove", handlePointerMove);
+      canvas.addEventListener("pointerleave", () => {
+        if (!state.dragging) {
+          tooltip.style.opacity = 0;
+          state.hovered = null;
+          renderSourcePanel(null);
+        }
+      });
+
+      yearSlider.addEventListener("input", () => {
+        state.year = Number(yearSlider.value);
+        yearLabel.textContent = String(state.year);
+        syncHashFromState();
+      });
+
+      timelinePlay.addEventListener("click", () => {
+        state.timelinePlaying = !state.timelinePlaying;
+        if (state.timelinePlaying) state.lastTimelineStepMs = performance.now();
+        updateTimelineButton();
+      });
+
+      searchInput.addEventListener("input", () => {
+        state.searchTerm = searchInput.value.trim();
+        syncHashFromState();
+      });
+
+      searchClear.addEventListener("click", () => {
+        state.searchTerm = "";
+        searchInput.value = "";
+        syncHashFromState();
+      });
+
+      window.addEventListener("resize", () => {
+        drawGlobe(wrap.clientWidth, wrap.clientHeight);
+      });
+
+      window.addEventListener("hashchange", () => {
+        applyHashState(window.location.hash);
+        syncControlsFromState();
+      });
+    }
+
+    applyHashState(window.location.hash);
+    setupFilters();
+    syncControlsFromState();
+    renderSourcePanel(null);
+    setupInput();
+    loadBoundaryData();
+    syncHashFromState();
+    drawGlobe(wrap.clientWidth, wrap.clientHeight);
+    animate();
+  </script>
+</body>
+</html>
